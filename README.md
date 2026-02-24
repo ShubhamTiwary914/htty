@@ -90,8 +90,6 @@ func (m MainPane) View() string {
 > feel free to add here (cuz I can't remember shit right now)
 
 
-```
-
 **About lipgloss**
 Lipgloss is simply the UI management, tea is left to deal with model state changes so actions like keypress, etc can trigger Update() -> View () -> which calls lipgloss for styling changes
 
