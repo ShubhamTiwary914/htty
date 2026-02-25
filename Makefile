@@ -3,7 +3,11 @@ LOGFILE=debug.log
 
 .PHONY: dev
 dev:
-	MODE=debug go run .
+	LOGLEVEL=dev go run .
+
+.PHONY: debug 
+debug:
+	LOGLEVEL=debug go run .
 
 .PHONY: build
 build:
@@ -30,7 +34,8 @@ help:
 	@echo "Usage: make [Target]"
 	@echo ""
 	@echo "[Targets]"
-	@echo "dev         run htty local in dev/debug mode"
+	@echo "dev         run htty local in dev mode (all logs - info, warn, error, debug are shown)"
+	@echo "debug       run htty local in debug mode"
 	@echo "build       build htty executable"
 	@echo "test        run test from ./tests folder"
 	@echo "logwatch    follow $(LOGFILE) for viewing live logs" 
