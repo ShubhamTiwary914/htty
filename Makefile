@@ -1,8 +1,13 @@
+LOGFILE=debug.log
 
 
 .PHONY: dev
 dev:
-	MODE=debug go run .
+	LOGLEVEL=dev go run .
+
+.PHONY: debug 
+debug:
+	LOGLEVEL=debug go run .
 
 .PHONY: build
 build:
@@ -10,7 +15,18 @@ build:
 
 .PHONY: logwatch
 logwatch:
-	tail -f ./debug.log
+	tail -f $(LOGFILE)
+
+.PHONY: logflush
+logflush: 
+	echo "" > $(LOGFILE)
+
+
+# yes this is not "recommended" pattern for tests in go, but simple to manage
+# recommended way is file.go should have file_test.go in same dir (but that is stupid)
+.PHONY: test
+test: 
+	go test ./tests -v
 	
 .PHONY: help
 help:
@@ -18,7 +34,9 @@ help:
 	@echo "Usage: make [Target]"
 	@echo ""
 	@echo "[Targets]"
-	@echo "dev         run htty local in dev/debug mode"
+	@echo "dev         run htty local in dev mode (all logs - info, warn, error, debug are shown)"
+	@echo "debug       run htty local in debug mode"
 	@echo "build       build htty executable"
-	@echo "logwatch    follow debug.log for viewing live logs" 
+	@echo "test        run test from ./tests folder"
+	@echo "logwatch    follow $(LOGFILE) for viewing live logs" 
 
