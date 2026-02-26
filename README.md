@@ -4,9 +4,9 @@ Simple, lightweight Terminal UI for making HTTP API calls
 ---
 
 ## Table of Contents
-- [Setup Guide](https://github.com/ShubhamTiwary914/htty/edit/master/README.md#setup--run-locally)
-- [Architecture](https://github.com/ShubhamTiwary914/htty/edit/master/README.md#architecture)
-- [Contributing Guidelines](https://github.com/ShubhamTiwary914/htty/edit/master/README.md#contributing) 
+- [Setup Guide](https://github.com/ShubhamTiwary914/htty/tree/master?tab=readme-ov-file#setup--run-locally)
+- [Architecture](https://github.com/ShubhamTiwary914/htty/tree/master?tab=readme-ov-file#architecture)
+- [Contributing Guidelines](https://github.com/ShubhamTiwary914/htty/tree/master?tab=readme-ov-file#contributing) 
 
 ---
 
@@ -122,4 +122,4 @@ for reference: [Guide for writing tests in golang](https://go.dev/doc/tutorial/a
 
 This project is licensed under the MIT License.
 
-See [LICENSE.md](https://github.com/ShubhamTiwary914/htty/edit/master/LICENSE.md) for full details.
+See [LICENSE](https://github.com/ShubhamTiwary914/htty/blob/master/LICENSE) for full details.
