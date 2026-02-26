@@ -1,95 +1,125 @@
+# HttY
+Simple, lightweight Terminal UI for making HTTP API calls
 
-# HttY - TUI toolkit for HTTP calls over curl 
+---
 
-### Usage for local run
-- Install go (recommened: 1.26.0)
+## Table of Contents
+- [Setup Guide](https://github.com/ShubhamTiwary914/htty/edit/master/README.md#setup--run-locally)
+- [Architecture](https://github.com/ShubhamTiwary914/htty/edit/master/README.md#architecture)
+- [Contributing Guidelines](https://github.com/ShubhamTiwary914/htty/edit/master/README.md#contributing) 
 
-Install packages:
+---
+
+## Setup & run locally
+
+#### Tools required:
+- Go (recommended ver: 1.26.0)
+- make
+
+Install dependencies:
 ```bash
 go install
 ```
 
-Run local:
-```bash
-make dev    #requires make, which most OS comes with inbuilt
+Run in development mode:
+```
+make dev
 ```
 
-For full supported commands list:
+Build binary (generates a `htty` binary):
 ```bash
-❯_ make help
-HttY makefile guide (source: Makefile)
-Usage: make [Target]
+make build
+```
 
-[Targets]
-dev         run htty local in dev/debug mode
-build       build htty executable
-logwatch    follow debug.log for viewing live logs
+Check full options make has:
+```
+make help
 ```
 
 ---
 
-### Contributing Guidelines
-
-> will be moved to a seperate "CONTRIBUTING.md", this is it for now
-
-1. For any large feature changes, please update this readme section "Stuff to add" as marked
-2. Try to avoid changes to go.mod or go.sum files (i.e: adding new packages) since they cause a lot of conflicts
-
-
-Structure for the UI side is:
+## Architecture
+Keeping the codebase into two parts:
+-  logic/utilitues (like logging,http,file) that can be tested
+-  UI, which is handled by packages: `bubble tea` & `lipgloss`
+	- [bubble tea](https://github.com/charmbracelet/bubbletea) handles state changes(like react), events(key press, etc)
+ 	- [lipgloss](https://github.com/charmbracelet/lipgloss) does the actual styling(border, colors, ...)
+  	- [bubbles](https://github.com/charmbracelet/bubbles?tab=readme-ov-file#file-picker) [addon]: has ready TUI components (using tea+lipgloss) like file picker, list, ...
+  
+So we break everything down to 'panels' (can be nested) to work modularly as possible, like:
+```bash
+App panel
+├── Main Panel
+│ └── Sub panels
+└── Side Panel
+└── Sub panels
 ```
-App panel --> Main Panel -> sub panels
-          --> Side Panel -> sub panels
-```
-i.e: everything is composed up of panels
 
+And each panel implements three methods:
+| Method   | Purpose                                                                                      |
+| -------- | -------------------------------------------------------------------------------------------- |
+| Init()   | Runs once when the model starts, for initial commands or setup.                              |
+| Update() | Handles incoming messages and state transitions, returns updated model                       |
+| View()   | Renders the UI based on current state, called after state changes.                           |
 
-Main libraries that you'll need context for are:
-- [Bubble tea](https://github.com/charmbracelet/bubbletea)
-- [Lipgloss](https://github.com/charmbracelet/lipgloss)
-
-**About tea**
-Tea is a state management tool (like react), it updates and renders these panels on changes (from tea's POV, models == panels), and each model has:
-- Init()    - when model starts
-- Update()  - handles incoming events and updates the model accordingly.
-- View()    - gets triggered when model changes (actual UI changes here)
-
-example:
+and "state" is a struct that is the "model" of that panel, example:
 ```go
 type MainPane struct {
+	somevar int;
 }
 
-func (main MainPane) Init() tea.Cmd {
-	return nil;
+func (m MainPane) Init() tea.Cmd {
+	return nil
 }
 
-func (main MainPane) Update(msg tea.Msg) (MainPane, tea.Cmd) {
-	return main, nil;
+func (m MainPane) Update(msg tea.Msg) (MainPane, tea.Cmd) {
+	m.var = somevalue
+	return m, nil
 }
 
 func (m MainPane) View() string {
 	return "main panel"
+    //lipgloss part of styling comes here
 }
 ```
 
 ---
 
+## Contributing 
 
-### Stuff to add
+#### Bug reporrs  
+Currently `htty` is under development and it will have a lot of bugs, that we will be fixing as they come up.
 
-- [ ] v0.1 (working tool)
-  - [ ] main wrapper utility for making HTTP requests with curl
-  - [ ] keybinds event handler (hardcoded keys) to navigate between panes/subpanes
-  - [ ] file parser to store HttY request (body,headers,..) & file picker on left  [navigation]
-      
-- [ ] v0.1 addons (additional features)
-  - [ ] central config for styling (that user can control --> ideally somewhere like ~/.config/htty/style.toml)
-  - [ ] keybinds config (similar to style, maybe somewhere like ~/.config/htty/keybinds.toml)
-  - [ ] navigate quickly using pane IDs (like main=1, side=2, ...)
+Feel free to let us know if you encounter any bug, it would help get the tool better. 
+To report a bug just open an [issue](https://github.com/ShubhamTiwary914/htty/issues) describing the bug.
 
-> feel free to add here (cuz I can't remember shit right now)
+#### Feature additions
+1. Making an issue for a feature initially with some clear description
+2. Fork the repo, making changes & push your branch and open a pull request against the main branch. (ex: `htty/main <- your-repo/feat/something`)
+3. Provide a clear description of the change, steps to verify that's successful and reference to the issue: (ex: `closes #10, <some short comment if needed>` or `referencing #100`)
 
 
-**About lipgloss**
-Lipgloss is simply the UI management, tea is left to deal with model state changes so actions like keypress, etc can trigger Update() -> View () -> which calls lipgloss for styling changes
+#### Debugging & Testing
 
+> TUI blocks stdout, so logs are piped to a `,/htty.log` file (when LOGLEVEL env is set while running htty)
+
+View live logs with:
+> 
+```bash
+make logwatch
+```
+
+> Tests are in `./tests/` folder which ideally, all core utilities should have tests for, run tests with:
+```bash
+make test
+``` 
+
+for reference: [Guide for writing tests in golang](https://go.dev/doc/tutorial/add-a-test)
+
+---
+
+### LICENSE
+
+This project is licensed under the MIT License.
+
+See [LICENSE.md](https://github.com/ShubhamTiwary914/htty/edit/master/LICENSE.md) for full details.
