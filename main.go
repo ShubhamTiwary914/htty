@@ -11,10 +11,9 @@ import (
 
  
 func main(){
-	if os.Getenv("MODE") == "debug" {
-		utils.RedirectLogs_toFile("debug.log", true)
-	}
-	utils.Debugf("htty application has started...")
+	//overwrite = true: flushes logfile each run
+	utils.RedirectLogs_toFile("htty.log", true)
+	utils.Infof("htty application has started...")
 
 	app := App{
 		sidePane: panels.SidePane{},
