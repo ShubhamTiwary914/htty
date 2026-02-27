@@ -1,7 +1,9 @@
 package htty
 
 import (
+	types "htty/types"
 	utils "htty/utils"
+	components "htty/panels/components"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -11,25 +13,26 @@ type RequestPane struct {
 	width, height int
 	focusIndex int
 	initialized bool
-	textdrop model
+	textdrop components.TextModel 
 }
 
 func (rq *RequestPane) Init() tea.Cmd {
 	utils.Infof("request subpanel initialization")
-	rq.textdrop = NewModel()
-	return nil;
+	rq.textdrop = components.TextModel{
+		CharLimit: 10, PanelID: types.PANEL_REQ_METHOD_ID, 
+		Placeholder: "Method", Showline: false,
+		Border: types.BorderConfig{Bottom: true},
+	}
+	return rq.textdrop.Init()
 }
 
 func (rq *RequestPane) Update(msg tea.Msg) (tea.Cmd){	
-	var cmds []tea.Cmd
-	var cmd tea.Cmd;
-	cmd = rq.textdrop.Update(msg) 
-	cmds = append(cmds, cmd)
-	return tea.Batch(cmds...) 
+	return utils.UpdatePanels(msg, &rq.textdrop)
 }
 
 func (rq RequestPane) View() string {
-	style := utils.SetBorder(rq.width-5, rq.height-2, lipgloss.RoundedBorder())
+	style := utils.SetFullBorder(rq.width-2, rq.height, 
+		lipgloss.Color(utils.GetPanelFocusColor(types.PANEL_REQ_ID))) 
 	return style.Render(rq.textdrop.View())
 }
 
@@ -38,4 +41,3 @@ func (rq *RequestPane) SetSize(w int, h int){
 	rq.height = h
 	rq.textdrop.SetSize(w/11, h/12)
 }
-

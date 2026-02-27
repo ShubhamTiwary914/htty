@@ -3,13 +3,11 @@ package main
 import (
 	panels "htty/panels"
 	utils "htty/utils"
-	types "htty/types"
+	global "htty/globals"
 
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
-
-var currentPanelID = types.PANEL_FOCUS["SIDE"] 
 
 type App struct {
 	width int 
@@ -28,32 +26,17 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	//auto resize to window dimensions
 	case tea.WindowSizeMsg:
-		app.width = msg.Width
-		app.height = msg.Height		
-		//set children bounds 
-		sideWidth := 30
-		mainWidth := app.width - sideWidth
-		app.sidePane.SetSize(sideWidth, app.height, 2)
-		app.mainPane.SetSize(mainWidth, app.height, 2)
-
+		app.SetSize(msg.Width, msg.Height)	
 	case tea.KeyMsg:
 		if msg.String() == "q" || msg.String() == "ctrl+c" {
 			utils.Debugf("exting the htty program...")
 			return &app, tea.Quit
 		}
 		if msg.String() == "tab" {
-				
+			utils.PanelFocusNext(&global.CurrentPanelID)				
 		}
-	}
-	
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
-	app.sidePane, cmd = app.sidePane.Update(msg)
-	cmds = append(cmds, cmd)
-
-	cmd = app.mainPane.Update(msg)
-	cmds = append(cmds, cmd)
-	return &app, tea.Batch(cmds...)
+	}	
+	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane) 
 }
 
 func (app App) View() string {
@@ -65,4 +48,14 @@ func (app App) View() string {
 		app.sidePane.View(),
 		app.mainPane.View(),
 	)
+}
+
+func (app *App) SetSize(width int, height int) {
+	app.width = width 
+	app.height = height 
+	//set children bounds 
+	sideWidth := 30
+	mainWidth := app.width - sideWidth
+	app.sidePane.SetSize(sideWidth, app.height, 2)
+	app.mainPane.SetSize(mainWidth, app.height, 2)
 }

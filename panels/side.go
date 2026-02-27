@@ -1,8 +1,8 @@
 package htty
 
 import (
-	panelutil "htty/utils"
-
+	utils "htty/utils"
+	types "htty/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,12 +17,14 @@ func (side SidePane) Init() tea.Cmd {
 	return nil;
 } 
 
-func (side SidePane) Update(msg tea.Msg) (SidePane, tea.Cmd) {
-	return side, nil;
+func (side *SidePane) Update(msg tea.Msg) (tea.Cmd) {
+	return nil;
 }
 
 func (side SidePane) View() string {
-	style := panelutil.SetBorder(side.width-side.margin, side.height-side.margin, lipgloss.RoundedBorder())
+	style := utils.SetFullBorder(side.width-side.margin, side.height-side.margin, 
+		lipgloss.Color(utils.GetPanelFocusColor(types.PANEL_SIDE_ID)),
+	)  
 	return style.Render("side panel")
 }
 

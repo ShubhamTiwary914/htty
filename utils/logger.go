@@ -2,24 +2,12 @@ package htty
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"runtime"
 	"time"
+	global "htty/globals"
+	types "htty/types"
 )
-
-const (
-	LOG_INFO  = "info"
-	LOG_WARN  = "warn"
-	LOG_ERROR = "error"
-	LOG_DEBUG = "debug"
-	LOG_ALL   = "all"
-	LOG_ENVNAME = "LOGLEVEL"
-)
-
-var logger = log.New(os.Stdout, "", 0)
-var devmodes = []string {LOG_INFO, LOG_WARN, LOG_ERROR, LOG_DEBUG, LOG_ALL}
-
 
 func Logf(level string, format string, args ...interface{}) {
 	if !assertAllowedLogLevel(level) {
@@ -36,19 +24,19 @@ func Logf(level string, format string, args ...interface{}) {
 		}
 	}
 	msg := fmt.Sprintf(format, args...)
-	logger.Printf("level=%s ts=%s caller=%s msg=%q", level, ts, caller, msg)
+	global.Logger.Printf("level=%s ts=%s caller=%s msg=%q", level, ts, caller, msg)
 }
 
 func Debugf(format string, args ...interface{}) {
-	Logf(LOG_DEBUG, format, args...)
+	Logf(types.LOG_DEBUG, format, args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	Logf(LOG_INFO, format, args...)
+	Logf(types.LOG_INFO, format, args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	Logf(LOG_ERROR, format, args...)
+	Logf(types.LOG_ERROR, format, args...)
 }
 
 
@@ -64,7 +52,7 @@ func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
 	if err != nil {
 		panic(err)
 	}
-	logger.SetOutput(logfile)
+	global.Logger.SetOutput(logfile)
 	return logfile	
 }
 
@@ -72,10 +60,10 @@ func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
 //check if the log is allowed in this "LOGLEVEL" 
 //(ex LOGLEVEL=all means allow all, LOGLEVEL=debug means allow only debug) 
 func assertAllowedLogLevel(level string) bool {
-	if os.Getenv(LOG_ENVNAME) == LOG_ALL {
+	if os.Getenv(types.LOG_ENVNAME) == types.LOG_ALL {
 		return true;	
 	}		
-	if os.Getenv(LOG_ENVNAME) == level {
+	if os.Getenv(types.LOG_ENVNAME) == level {
 		return true;	
 	}
 	return false

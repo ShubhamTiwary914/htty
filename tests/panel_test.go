@@ -24,7 +24,7 @@ func TestPanelFocusControl(tt *testing.T){
 		tt.Errorf("panelID: %d, expected: %d", currentPanel, 2)
 	}
 
-	utils.PanelFocusJump(&currentPanel, types.PANEL_FOCUS["SIDE"])
+	utils.PanelFocusJump(&currentPanel, types.PANEL_FOCUS_IDS["SIDE"])
 	if currentPanel != 0 {
 		tt.Errorf("panelID: %d, expected: %d", currentPanel, 0)
 	}

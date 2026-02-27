@@ -19,15 +19,10 @@ func (main *MainPane) Init() tea.Cmd {
 }
 
 func (main *MainPane) Update(msg tea.Msg) (tea.Cmd) {
-	var cmds []tea.Cmd
-	var cmd tea.Cmd;
-	cmd = main.requestPane.Update(msg)
-	cmds = append(cmds, cmd)
-	return tea.Batch(cmds...) 
+	return utils.UpdatePanels(msg, &main.requestPane)
 }
 
 func (main MainPane) View() string {
-	// style := utils.SetBorder(main.width - main.margin, main.height - main.margin, lipgloss.RoundedBorder())
 	style := lipgloss.NewStyle()
 	return style.Render(main.requestPane.View())
 }
