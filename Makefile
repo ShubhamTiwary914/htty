@@ -1,9 +1,9 @@
-LOGFILE=debug.log
+LOGFILE=htty.log
 
 
 .PHONY: dev
 dev:
-	LOGLEVEL=dev go run .
+	LOGLEVEL=all go run .
 
 .PHONY: debug 
 debug:
@@ -21,6 +21,11 @@ logwatch:
 logflush: 
 	echo "" > $(LOGFILE)
 
+.PHONY: logwatch_new
+logwatch_new:
+	$(MAKE) logflush 
+	$(MAKE) logwatch
+
 
 # yes this is not "recommended" pattern for tests in go, but simple to manage
 # recommended way is file.go should have file_test.go in same dir (but that is stupid)
@@ -28,6 +33,7 @@ logflush:
 test: 
 	go test ./tests -v
 	
+
 .PHONY: help
 help:
 	@echo "HttY makefile guide (source: Makefile)"

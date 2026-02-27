@@ -1,4 +1,4 @@
-// shared utilities for panels to use (styling, state management, etc..)
+// shared utilities for panels to use (styling)
 package htty
 
 import (
@@ -14,5 +14,7 @@ func SetBorder(width, height int, border lipgloss.Border) lipgloss.Style {
 	if border == (lipgloss.Border{}) {
 		border = lipgloss.NormalBorder()
 	}
-	return style.Border(border)
+	return style.Border(border).BorderForeground(lipgloss.Color("240"))
 }
+
+

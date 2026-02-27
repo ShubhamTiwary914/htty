@@ -2,9 +2,14 @@ package main
 
 import (
 	panels "htty/panels"
+	utils "htty/utils"
+	types "htty/types"
+
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+var currentPanelID = types.PANEL_FOCUS["SIDE"] 
 
 type App struct {
 	width int 
@@ -13,7 +18,9 @@ type App struct {
 	mainPane panels.MainPane
 }
 
-func (app App) Init() tea.Cmd {
+func (app *App) Init() tea.Cmd {
+	utils.Infof("app panel initialization called")
+	app.mainPane.Init()
 	return nil
 }
 
@@ -31,7 +38,11 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		if msg.String() == "q" || msg.String() == "ctrl+c" {
-			return app, tea.Quit
+			utils.Debugf("exting the htty program...")
+			return &app, tea.Quit
+		}
+		if msg.String() == "tab" {
+				
 		}
 	}
 	
@@ -40,9 +51,9 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	app.sidePane, cmd = app.sidePane.Update(msg)
 	cmds = append(cmds, cmd)
 
-	app.mainPane, cmd = app.mainPane.Update(msg)
+	cmd = app.mainPane.Update(msg)
 	cmds = append(cmds, cmd)
-	return app, tea.Batch(cmds...)
+	return &app, tea.Batch(cmds...)
 }
 
 func (app App) View() string {

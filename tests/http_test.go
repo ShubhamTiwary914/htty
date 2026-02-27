@@ -1,7 +1,7 @@
 package htty_test
 
 import (
-	http "htty/http"
+	http "htty/utils"
 	types "htty/types"
 	"testing"
 	"encoding/json"

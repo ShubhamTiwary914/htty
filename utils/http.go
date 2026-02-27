@@ -7,14 +7,13 @@ import (
 	"time"
 	"strings"
 	types "htty/types"
-	utils "htty/utils"
 )  
 
 // sends an HTTP request with the given method, URL, headers, and body.
 // returns the response body bytes, status code, and an error if any.
 func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	if !AssertHTTPMethodType(httpObj.Method) {
-		utils.Errorf("HTTP method type not valid: %s", httpObj.Method)			
+		Errorf("HTTP method type not valid: %s", httpObj.Method)			
 	}
 	client := &http.Client{
 		Timeout: time.Duration(types.REQUEST_TIMEOUT) * time.Second,

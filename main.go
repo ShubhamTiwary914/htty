@@ -13,13 +13,12 @@ import (
 func main(){
 	//overwrite = true: flushes logfile each run
 	utils.RedirectLogs_toFile("htty.log", true)
-	utils.Infof("htty application has started...")
-
+	utils.Infof("htty application initializing")
 	app := App{
 		sidePane: panels.SidePane{},
 		mainPane: panels.MainPane{},
 	}
-	proc := tea.NewProgram(app, tea.WithAltScreen())
+	proc := tea.NewProgram(&app, tea.WithAltScreen())
 	if _, err := proc.Run(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
         os.Exit(1)
