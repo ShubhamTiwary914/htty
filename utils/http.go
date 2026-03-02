@@ -2,7 +2,6 @@ package htty
 	
 import (
 	"net/http"
-	"bytes"
 	"io"
 	"time"
 	"strings"
@@ -20,8 +19,8 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	}
 	//encapsulate request
 	var bodyBuffer io.Reader
-	if len(httpObj.Body) > 0 {
-		bodyBuffer = bytes.NewBufferString(strings.Join(httpObj.Body, "\n"))
+	if httpObj.Body != "" {
+		bodyBuffer = strings.NewReader(httpObj.Body)
 	}
 	request, err := http.NewRequest(httpObj.Method, httpObj.Path, bodyBuffer)
 	if err != nil {
@@ -43,6 +42,26 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	}
 	return respBody, resp.StatusCode, nil
 }
+
+//takes headers string of k/v pairs seperated by lines and compose header map(key -> val)
+func HeaderKVparser(rawHeaders string) map[string]string{
+	headers := make(map[string]string)
+	for _, line := range strings.Split(rawHeaders, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		headers[key] = val
+	}
+	return headers;
+}
+
 
 func AssertHTTPMethodType(method string) bool{
 	_, found := types.HTTP_METHOD[method]

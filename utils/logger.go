@@ -82,3 +82,22 @@ func pathBase(fp string) string {
 	}
 	return fp
 }
+
+// --------------------------------
+//some commmon usecase types logging
+// -------------- -------------- --
+func HttpObjectLogOut(httpObj types.HttpType) {
+	Debugf("HTTP REQUEST ----")
+	Debugf("Method: %s", httpObj.Method)
+	Debugf("Path: %s", httpObj.Path)
+	if len(httpObj.Headers) > 0 {
+		Debugf("Headers:")
+		for k, v := range httpObj.Headers {
+			Debugf(" %s: %s", k, v)
+		}
+	}
+	if httpObj.Body != "" {
+		Debugf("Body:")
+		Debugf("%s", httpObj.Body)
+	}
+}

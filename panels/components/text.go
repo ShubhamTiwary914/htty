@@ -8,9 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 )
-var options = []string{"foo", "bar", "baz"}
 
-type TextModel struct {
+type TextPane struct {
 	Width, Height int
 	Input textarea.Model
 	CharLimit int
@@ -18,9 +17,10 @@ type TextModel struct {
 	Placeholder string 
 	Showline bool 
 	Border types.BorderConfig
+	Margin types.MarginConfig
 }
 
-func (text *TextModel) Init() tea.Cmd {
+func (text *TextPane) Init() tea.Cmd {
 	var input textarea.Model = textarea.New()
 	input.Placeholder = text.Placeholder
 	input.ShowLineNumbers = text.Showline
@@ -31,7 +31,7 @@ func (text *TextModel) Init() tea.Cmd {
 	return nil
 }
 
-func (text *TextModel) Update(msg tea.Msg) tea.Cmd {
+func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	focused := global.CurrentPanelID == types.PANEL_FOCUS_IDS[text.PanelID]
 	if focused {
@@ -45,18 +45,13 @@ func (text *TextModel) Update(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-func (text TextModel) View() string {	
-	utils.Debugf("borders: (top:%t)(bot:%t)(left:%t)(right:%t)", 
-		text.Border.Top,
-		text.Border.Bottom,
-		text.Border.Left,
-		text.Border.Right,
-	)
-	style := utils.SetBorder(text.Border)
+func (text TextPane) View() string {	
+	style := utils.SetBorder(text.Border).Margin(
+		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left)
 	return style.Render(text.Input.View())
 }
 
-func (text *TextModel) SetSize(width, height int) {
+func (text *TextPane) SetSize(width, height int) {
 	text.Width = width
 	text.Height = height
 	text.Input.SetWidth(width)

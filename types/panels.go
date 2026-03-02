@@ -7,14 +7,24 @@ import (
 
 const (
 	PANEL_SIDE_ID string = "SIDE"
+
 	PANEL_REQ_ID string = "MAIN"
 	PANEL_REQ_METHOD_ID string = "REQ.METHOD"
+	PANEL_REQ_URL_ID string = "REQ.URL"
+	PANEL_REQ_HEADERS string = "REQ.HEADERS"
+	PANEL_REQ_BODY string = "REQ.BODY"
+
+	PANEL_RES string = "RES"
 )
 //enum for "focused" panel where cmd actions can act on currently
 var PANEL_FOCUS_IDS = map[string]int{
 	PANEL_SIDE_ID: 0,
 	PANEL_REQ_ID: 1,
 	PANEL_REQ_METHOD_ID: 2,
+	PANEL_REQ_URL_ID: 3,
+	PANEL_REQ_HEADERS: 4,
+	PANEL_REQ_BODY: 5,
+	PANEL_RES: 6,
 }
 
 const (
@@ -39,6 +49,13 @@ type BorderConfig struct {
 	Bottom bool
 	Left   bool
 	Right  bool
+}
+
+type MarginConfig struct {
+	Top    int
+	Bottom int 
+	Left   int  
+	Right  int 
 }
 
 const (

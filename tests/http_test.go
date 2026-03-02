@@ -41,9 +41,7 @@ func TestHTTPCaller_PostWithHeadersAndBody(tt *testing.T) {
 			"Content-Type": "application/json",
 			"X-Custom-Test": "htty",
 		},
-		Body: []string{
-			`{"name":"htty","role":"dev"}`,
-		},
+		Body: `{"name":"htty","role":"dev"}`,
 	}
 	body, status, err := http.HTTPCaller(req)
 	if err != nil {

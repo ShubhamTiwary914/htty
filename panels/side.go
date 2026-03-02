@@ -25,7 +25,7 @@ func (side SidePane) View() string {
 	style := utils.SetFullBorder(side.width-side.margin, side.height-side.margin, 
 		lipgloss.Color(utils.GetPanelFocusColor(types.PANEL_SIDE_ID)),
 	)  
-	return style.Render("side panel")
+	return style.Render("Side Panel (to be added)")
 }
 
 func (side *SidePane) SetSize(w int, h int, m int) {
