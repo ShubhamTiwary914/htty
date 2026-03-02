@@ -1,3 +1,4 @@
+#INFO: default logfile path, is configurable
 LOGFILE=htty.log
 
 

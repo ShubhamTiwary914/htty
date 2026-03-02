@@ -69,3 +69,42 @@ func TestHTTPCaller_PostWithHeadersAndBody(tt *testing.T) {
 		tt.Fatalf("body not echoed correctly")
 	}
 }
+
+
+
+func TestHeaderKVparser_Basic(tt *testing.T) {
+	raw := `
+Authorization: Bearer Token
+Content-Type: application/json
+X-Test: 123
+`
+	headers := http.HeaderKVparser(raw)
+	if len(headers) != 3 {
+		tt.Fatalf("expected 3 headers, got %d", len(headers))
+	}
+	if headers["Authorization"] != "Bearer Token" {
+		tt.Fatalf("unexpected Authorization value: %s", headers["Authorization"])
+	}
+	if headers["Content-Type"] != "application/json" {
+		tt.Fatalf("unexpected Content-Type value: %s", headers["Content-Type"])
+	}
+	if headers["X-Test"] != "123" {
+		tt.Fatalf("unexpected X-Test value: %s", headers["X-Test"])
+	}
+}
+
+func TestHeaderKVparser_IgnoreInvalidAndEmpty(tt *testing.T) {
+	raw := `
+InvalidLineWithoutColon
+Another-Bad-Line
+
+Accept: application/json
+`
+	headers := http.HeaderKVparser(raw)
+	if len(headers) != 1 {
+		tt.Fatalf("expected 1 valid header, got %d", len(headers))
+	}
+	if headers["Accept"] != "application/json" {
+		tt.Fatalf("unexpected Accept value: %s", headers["Accept"])
+	}
+}

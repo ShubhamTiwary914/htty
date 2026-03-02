@@ -8,13 +8,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-
+//move focus of cursor onto next item in panels list 
+//(present at types/panels -> PANEL_FOCUS_IDS)
 func PanelFocusNext(focusID *int){
 	(*focusID)++
 	if (*focusID >= len(types.PANEL_FOCUS_IDS)){
 		(*focusID) = 0
 	}
 }
+
+//move focus of cursor onto previous item in panels list 
+//(present at types/panels -> PANEL_FOCUS_IDS)
 func PanelFocusPrev(focusID *int){
 	(*focusID)--
 	if (*focusID < 0){
@@ -22,7 +26,10 @@ func PanelFocusPrev(focusID *int){
 	}
 }
 
-//jump to panel using the panelID or panel mapping string in types/panels/PANEL_FOCUS
+
+//jump to panel using the panelID(2) or panel mapping string(ex: "PANEL_REQ_METHOD_ID") 
+//(present at types/panels -> PANEL_FOCUS_IDS)
+//NOTE: using the panel enums constant is recommended, instead of using hardcoded magic numbers
 func PanelFocusJump(focusID *int, newfocuskey interface{}){
 	switch newfocuskey.(type) {
 		case int:
@@ -32,6 +39,14 @@ func PanelFocusJump(focusID *int, newfocuskey interface{}){
 	}	
 }
 
+/*
+	passes tea Msg object to child panels for handling update events, 
+	in order words, it allows these child panels to be "updated" to new events
+	
+	usage:  UpdatePanels(msg, &childpane1, &childpane2...)
+
+	"msg" is the object of type tea.Msg which can hold event actions like keyboard press, mouse clicks etc
+*/
 func UpdatePanels(msg tea.Msg, panels ...types.BasePanel) tea.Cmd {
 	var cmds []tea.Cmd
 	for _, p := range panels {
@@ -42,8 +57,10 @@ func UpdatePanels(msg tea.Msg, panels ...types.BasePanel) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-//get color for panel border depdening on whether it is in focus.
-//(can pass panelID like 0,1 or string like "SIDE")
+
+// Get focus color(bright) if this panel is focused on, or get unfocus color(dim) if this panel isnt in focus.  
+// Can be used for highlighting border of focused panels
+// (can pass panelID like costant PANEL_REQ_METHOD_ID present or string like "SIDE")
 func GetPanelFocusColor(panelkey interface{}) string {
 	var panelID int
 	switch panelkey.(type){
@@ -59,6 +76,7 @@ func GetPanelFocusColor(panelkey interface{}) string {
 }
 
 
+// General main method to set lipgloss border for panels
 func SetBorder(cfg types.BorderConfig) lipgloss.Style {
 	style := lipgloss.NewStyle().
 		Width(cfg.Width).

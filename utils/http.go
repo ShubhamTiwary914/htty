@@ -8,8 +8,12 @@ import (
 	types "htty/types"
 )  
 
-// sends an HTTP request with the given method, URL, headers, and body.
-// returns the response body bytes, status code, and an error if any.
+
+/* 
+	Sends an HTTP request with the given method, URL, headers, and body.
+ 	
+	Returns: (response body bytes, status code, error if any).
+*/
 func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	if !AssertHTTPMethodType(httpObj.Method) {
 		Errorf("HTTP method type not valid: %s", httpObj.Method)			
@@ -43,7 +47,14 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	return respBody, resp.StatusCode, nil
 }
 
-//takes headers string of k/v pairs seperated by lines and compose header map(key -> val)
+/*
+	Takes headers string of k/v pairs seperated by lines and compose header map(key -> val)
+	Assumes key value are delimited by ':', example:
+
+	Authorization: Bearer Token
+	Content-Type: application/json
+	...
+*/
 func HeaderKVparser(rawHeaders string) map[string]string{
 	headers := make(map[string]string)
 	for _, line := range strings.Split(rawHeaders, "\n") {
@@ -62,7 +73,7 @@ func HeaderKVparser(rawHeaders string) map[string]string{
 	return headers;
 }
 
-
+//check if http method is of standard type(GET/POST/PUT/etc..)
 func AssertHTTPMethodType(method string) bool{
 	_, found := types.HTTP_METHOD[method]
 	if found {

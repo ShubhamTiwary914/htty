@@ -36,6 +36,7 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			utils.PanelFocusNext(&global.CurrentPanelID)				
 		}
 	}	
+	//INFO: allows passing tea object for handling events to children panes
 	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane) 
 }
 

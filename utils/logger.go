@@ -9,6 +9,11 @@ import (
 	types "htty/types"
 )
 
+/*
+	main utility for detailed logging, uses "logger" object to log out to stdout/file/etc...
+	
+	example usage:  Logf(LOG_INFO, "%s %d", str_, int_) [similar to C printf style]
+*/
 func Logf(level string, format string, args ...interface{}) {
 	if !assertAllowedLogLevel(level) {
 		return; 
@@ -27,20 +32,26 @@ func Logf(level string, format string, args ...interface{}) {
 	global.Logger.Printf("level=%s ts=%s caller=%s msg=%q", level, ts, caller, msg)
 }
 
+// Logf with LOGLEVEL=debug 
 func Debugf(format string, args ...interface{}) {
 	Logf(types.LOG_DEBUG, format, args...)
 }
 
+// Logf with LOGLEVEL=info
 func Infof(format string, args ...interface{}) {
 	Logf(types.LOG_INFO, format, args...)
 }
 
+// Logf with LOGLEVEL=error
 func Errorf(format string, args ...interface{}) {
 	Logf(types.LOG_ERROR, format, args...)
 }
 
 
-//redirect the logs to some debug file (suggested use only during debug MODE)
+/*
+	Redirect the logs to some file(default=htty.log) by changing the logger object's sink
+	(since TUI blocks stdout, its better to log this way)
+*/
 func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
 	var flags int
 	if overwrite {
@@ -57,8 +68,8 @@ func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
 }
 
 
-//check if the log is allowed in this "LOGLEVEL" 
-//(ex LOGLEVEL=all means allow all, LOGLEVEL=debug means allow only debug) 
+// internal method for Logf to check if the log is allowed in this "LOGLEVEL" 
+// (ex LOGLEVEL=all means allow all, LOGLEVEL=debug means allow only debug) 
 func assertAllowedLogLevel(level string) bool {
 	if os.Getenv(types.LOG_ENVNAME) == types.LOG_ALL {
 		return true;	
@@ -69,6 +80,7 @@ func assertAllowedLogLevel(level string) bool {
 	return false
 }
 
+//get path to where the logger was called in the program runtime
 func pathBase(fp string) string {
 	lastslash := -1
 	for id := len(fp) - 1; id >= 0; id-- {
@@ -83,8 +95,10 @@ func pathBase(fp string) string {
 	return fp
 }
 
+
 // --------------------------------
-//some commmon usecase types logging
+// Logging for specific structures
+// ex: to print status of HttpType object
 // -------------- -------------- --
 func HttpObjectLogOut(httpObj types.HttpType) {
 	Debugf("HTTP REQUEST ----")
