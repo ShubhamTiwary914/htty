@@ -55,6 +55,7 @@ func (rq RequestPane) View() string {
 }
 
 func (rq *RequestPane) SetSize(w int, h int){
+	//TODO: instead of raw dogging sizes, its better to load based off config, with relative sizing in %s 
 	rq.width = w
 	rq.height = h
 	rq.method.SetSize(w/11, h/12)
@@ -65,6 +66,7 @@ func (rq *RequestPane) SetSize(w int, h int){
 
 //config for all the subpanels for Request
 func RequestSubPanels() (components.TextPane, components.TextPane, components.TextPane, components.TextPane) {
+	//TODO: these config are better off handled by the config manager instead of this
 	var methodTypeComponent = components.TextPane{
 		CharLimit: 10, PanelID: types.PANEL_REQ_METHOD_ID, 
 		Placeholder: "Method", Showline: false,
@@ -111,5 +113,3 @@ func (rq *RequestPane) ExportPayload() (types.HttpType) {
 		Body: body,
 	}
 }
-
-

@@ -5,8 +5,10 @@ import (
 	utils "htty/utils"
 
 	global "htty/globals"
+
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type TextPane struct {
@@ -34,6 +36,7 @@ func (text *TextPane) Init() tea.Cmd {
 func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	focused := global.CurrentPanelID == types.PANEL_FOCUS_IDS[text.PanelID]
+	//set a line focus pointer when this panel is focused on
 	if focused {
 		text.Input.Focus()
 		text.Input.Prompt = "│ " 
@@ -46,7 +49,10 @@ func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (text TextPane) View() string {	
-	style := utils.SetBorder(text.Border).Margin(
+	style := utils.SetBorder(text.Border).BorderForeground(
+		//adds highlight on border when focused on
+		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
+	).Margin(
 		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left)
 	return style.Render(text.Input.View())
 }
