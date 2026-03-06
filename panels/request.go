@@ -1,10 +1,12 @@
 package htty
 
 import (
+	global "htty/globals"
 	components "htty/panels/components"
 	types "htty/types"
 	utils "htty/utils"
 
+	// global "htty/globals"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )		
@@ -54,14 +56,24 @@ func (rq RequestPane) View() string {
 	return style.Render(requestSubpanels)
 }
 
-func (rq *RequestPane) SetSize(w int, h int){
-	//TODO: instead of raw dogging sizes, its better to load based off config, with relative sizing in %s 
-	rq.width = w
-	rq.height = h
-	rq.method.SetSize(w/11, h/12)
-	rq.url.SetSize(int(float64(w)/1.25), h/12)
-	rq.headers.SetSize(w/3, int(float64(h)/1.5))
-	rq.body.SetSize(int(float64(w)/1.8), int(float64(h)/1.5))
+func (rq *RequestPane) SetSize(width int, height int){
+	rq.width = width; rq.height = height
+	rq.method.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.height),
+	)
+	rq.url.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_url.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_url.Height, rq.height),
+	)
+	rq.headers.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_headers.Height, rq.height),
+	)
+	rq.body.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_body.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_body.Height, rq.height),
+	)
 }
 
 //config for all the subpanels for Request

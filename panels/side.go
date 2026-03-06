@@ -10,7 +10,6 @@ import (
 type SidePane struct {
 	width int 
 	height int
-	margin int
 }
 
 func (side SidePane) Init() tea.Cmd {
@@ -22,14 +21,13 @@ func (side *SidePane) Update(msg tea.Msg) (tea.Cmd) {
 }
 
 func (side SidePane) View() string {
-	style := utils.SetFullBorder(side.width-side.margin, side.height-side.margin, 
+	style := utils.SetFullBorder(side.width-2, side.height-2, 
 		lipgloss.Color(utils.GetPanelFocusColor(types.PANEL_SIDE_ID)),
 	)  
-	return style.Render("Side Panel (to be added)")
+	return style.Render("Side Panel") 
 }
 
-func (side *SidePane) SetSize(w int, h int, m int) {
-	side.width = w
-	side.height = h
-	side.margin = m
+func (side *SidePane) SetSize(width int, height int) {
+	side.width = width
+	side.height = height
 }

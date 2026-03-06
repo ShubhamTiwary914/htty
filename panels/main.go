@@ -2,14 +2,14 @@ package htty
 
 import (
 	"fmt"
+	global "htty/globals"
 	utils "htty/utils"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type MainPane struct {
-	width int	
+	width int
 	height int
 	requestPane RequestPane 
 	responsePane ResponsePane
@@ -27,7 +27,7 @@ func (main *MainPane) Update(msg tea.Msg) (tea.Cmd) {
 	//auto resize to window dimensions
 	case tea.KeyMsg:
 		//take out inputs from reqPane -> http call -> response to responsePane
-		if msg.String() == "alt+enter" {
+		if msg.String() == global.Config.Key.Sendapicall {
 			resp, status, err := utils.HTTPCaller(main.requestPane.ExportPayload())
 			var output string
 			if err != nil {
@@ -52,10 +52,14 @@ func (main MainPane) View() string {
 	return style.Render(mainSubPanels)
 }
 
-func (main *MainPane) SetSize(w int, h int, m int) {
-	main.width = w
-	main.height = h
-	main.requestPane.SetSize(w, h/2)
-	main.responsePane.SetSize(w, int(float64(h)/2.5))
+func (main *MainPane) SetSize(width int, height int) {	
+	main.width = width; main.height = height;
+	main.requestPane.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req.Width, main.width),
+		utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
+	)
+	main.responsePane.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_res.Width, main.width),
+		utils.GetPercent(global.Config.Panels.Main_res.Height, main.height),
+	)
 }
-

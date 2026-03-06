@@ -9,12 +9,11 @@ import (
 	components "htty/panels/components"
 	types "htty/types"
 	utils "htty/utils"
-
+	
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type ResponsePane struct {
-	width, height int
 	textpane components.TextPane
 }
 
@@ -34,10 +33,8 @@ func (res ResponsePane) View() string {
 	return res.textpane.View()
 }
 
-func (res *ResponsePane) SetSize(w, h int) {
-	res.width = w
-	res.height = h
-	res.textpane.SetSize(int(float64(w)/1.05), h)
+func (res *ResponsePane) SetSize(width int, height int) {
+	res.textpane.SetSize(width-2, height)
 }
 
 func (res *ResponsePane) SetResponse(body string) {

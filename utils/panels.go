@@ -8,6 +8,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+
+func GetPercent(percentage int, source int) int{
+	return (percentage * source)/100
+}
+
 //move focus of cursor onto next item in panels list 
 //(present at types/panels -> PANEL_FOCUS_IDS)
 func PanelFocusNext(focusID *int){
