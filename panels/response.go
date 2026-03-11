@@ -10,6 +10,7 @@ import (
 	types "htty/types"
 	utils "htty/utils"
 	
+	global "htty/globals"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -43,7 +44,7 @@ func (res *ResponsePane) SetResponse(body string) {
 
 func NewResponseTextComponent() (components.TextPane) {
 	var responseTextComponent = components.TextPane{
-		CharLimit: 1024, PanelID: types.PANEL_RES, 
+		CharLimit: 1024, PanelID: global.PANEL_RES, 
 		Placeholder: "response will appear here... (API call with ctrl+enter)", Showline: false,
 		Border: types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		Margin: types.MarginConfig{Left:1,Top: 1},

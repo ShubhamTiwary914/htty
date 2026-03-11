@@ -2,7 +2,7 @@ package htty_test
 
 import (
 	utils "htty/utils"	
-	types "htty/types"
+	global "htty/globals"
 	"testing"
 )
 
@@ -24,7 +24,7 @@ func TestPanelFocusControl(tt *testing.T){
 		tt.Errorf("panelID: %d, expected: %d", currentPanel, 2)
 	}
 
-	utils.PanelFocusJump(&currentPanel, types.PANEL_FOCUS_IDS["SIDE"])
+	utils.PanelFocusJump(&currentPanel, global.PANEL_FOCUS_IDS["SIDE"])
 	if currentPanel != 0 {
 		tt.Errorf("panelID: %d, expected: %d", currentPanel, 0)
 	}

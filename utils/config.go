@@ -45,3 +45,17 @@ func GetConfig() (types.HttyConfig, error) {
 	}
    	return configJson, nil 
 }
+
+func GetPanelIDsMap(cfg types.HttyConfig) (map[string]int, error) {
+	panelIDs := map[string]int{
+		"main":             cfg.Panels.Main.ID,
+		"side":             cfg.Panels.Side.ID,
+		"main_req":         cfg.Panels.Main_req.ID,
+		"main_req_method":  cfg.Panels.Main_req_method.ID,
+		"main_req_url":     cfg.Panels.Main_req_url.ID,
+		"main_req_headers": cfg.Panels.Main_req_headers.ID,
+		"main_req_body":    cfg.Panels.Main_req_body.ID,
+		"main_res":         cfg.Panels.Main_res.ID,
+	}
+	return panelIDs, nil	
+}

@@ -1,0 +1,58 @@
+{
+  "common": {
+    "focus_border_color": "FFF",
+    "unfocus_border_color": "240"
+  },
+  "panels": {
+    "main": {
+      "id": 0,
+      "width": 80,
+      "height": 100
+    },
+    "side": {
+      "id": 1,
+      "width": 20,
+      "height": 100
+    },
+    "main_req": {
+      "id": 2,
+      "width": 100,
+      "height": 50
+    },
+    "main_req_method": {
+      "id": 4,
+      "width": 10,
+      "height": 2
+    },
+    "main_req_url": {
+      "id": 5,
+      "width": 75,
+      "height": 2
+    },
+    "main_req_headers": {
+      "id": 6,
+      "width": 40,
+      "height": 70
+    },
+    "main_req_body": {
+      "id": 7,
+      "width": 45,
+      "height": 70
+    },
+    "main_res": {
+      "id": 8,
+      "width": 100,
+      "height": 40
+    }
+  },
+  "log": {
+    "allow": true,
+    "file": "htty.log",
+    "level": "all"
+  },
+  "key": {
+    "quit": "q",
+    "nextpanel": "tab",
+    "sendapicall": "alt+enter"
+  }
+}

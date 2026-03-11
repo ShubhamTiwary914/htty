@@ -2,8 +2,8 @@ package htty
 
 import (
 	types "htty/types"
-
 	global "htty/globals"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,7 +17,7 @@ func GetPercent(percentage int, source int) int{
 //(present at types/panels -> PANEL_FOCUS_IDS)
 func PanelFocusNext(focusID *int){
 	(*focusID)++
-	if (*focusID >= len(types.PANEL_FOCUS_IDS)){
+	if (*focusID >= len(global.PANEL_FOCUS_IDS)){
 		(*focusID) = 0
 	}
 }
@@ -27,7 +27,7 @@ func PanelFocusNext(focusID *int){
 func PanelFocusPrev(focusID *int){
 	(*focusID)--
 	if (*focusID < 0){
-		(*focusID) = len(types.PANEL_FOCUS_IDS)-1
+		(*focusID) = len(global.PANEL_FOCUS_IDS)-1
 	}
 }
 
@@ -40,7 +40,7 @@ func PanelFocusJump(focusID *int, newfocuskey interface{}){
 		case int:
 			*focusID = newfocuskey.(int)
 		case string:
-			*focusID = (types.PANEL_FOCUS_IDS[(newfocuskey.(string))])
+			*focusID = (global.PANEL_FOCUS_IDS[(newfocuskey.(string))])
 	}	
 }
 
@@ -72,12 +72,12 @@ func GetPanelFocusColor(panelkey interface{}) string {
 		case int:
 			panelID = panelkey.(int)
 		case string:
-			panelID = (types.PANEL_FOCUS_IDS[(panelkey.(string))])
+			panelID = (global.PANEL_FOCUS_IDS[(panelkey.(string))])
 	}
 	if global.CurrentPanelID == panelID {
-		return types.PANEL_FOCUS_COLOR
+		return global.Config.Common.Focus_border_color 
 	}
-	return types.PANEL_UNFOCUS_COLOR
+	return global.Config.Common.Unfocus_border_color
 }
 
 

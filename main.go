@@ -1,19 +1,18 @@
 package main
 
 import (
-	"fmt"
+	global "htty/globals"
 	utils "htty/utils"
 	"os"
-	global "htty/globals"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
- 
 func main(){
 	app := __init()
 	proc := tea.NewProgram(&app, tea.WithAltScreen())
 	if _, err := proc.Run(); err != nil {
-        fmt.Printf("Alas, there's been an error: %v", err)
+        utils.Errorf("Alas, there's been an error: %v", err)
         os.Exit(1)
     }
 }
@@ -22,6 +21,11 @@ func __init() App {
 	//load config
 	var err error
 	global.Config , err = utils.GetConfig() 
+	if err != nil {
+		panic(err)			
+	}
+	global.PANEL_FOCUS_IDS, err = utils.GetPanelIDsMap(global.Config)
+	global.CurrentPanelID = global.PANEL_FOCUS_IDS[global.PANEL_REQ_METHOD_ID]
 	if err != nil {
 		panic(err)			
 	}

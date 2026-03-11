@@ -2,7 +2,7 @@ package htty
 
 import (
 	utils "htty/utils"
-	types "htty/types"
+	global "htty/globals"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -22,7 +22,7 @@ func (side *SidePane) Update(msg tea.Msg) (tea.Cmd) {
 
 func (side SidePane) View() string {
 	style := utils.SetFullBorder(side.width-2, side.height-2, 
-		lipgloss.Color(utils.GetPanelFocusColor(types.PANEL_SIDE_ID)),
+		lipgloss.Color(utils.GetPanelFocusColor(global.PANEL_SIDE_ID)),
 	)  
 	return style.Render("Side Panel") 
 }

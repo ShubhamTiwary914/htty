@@ -4,6 +4,7 @@ import (
 	"fmt"
 	global "htty/globals"
 	utils "htty/utils"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
