@@ -1,17 +1,15 @@
 package main
 
 import (
+	global "htty/globals"
 	panels "htty/panels"
 	utils "htty/utils"
-	global "htty/globals"
 
-	"github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type App struct {
-	width int 
-	height int
 	sidePane panels.SidePane 
 	mainPane panels.MainPane
 }
@@ -19,6 +17,7 @@ type App struct {
 func (app *App) Init() tea.Cmd {
 	utils.Infof("app panel initialization called")
 	app.mainPane.Init()
+	app.sidePane.Init()
 	return nil
 }
 
@@ -26,13 +25,15 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	//auto resize to window dimensions
 	case tea.WindowSizeMsg:
-		app.SetSize(msg.Width, msg.Height)	
+		global.AppWidth = msg.Width
+		global.AppHeight = msg.Height
+		app.SetSize()	
 	case tea.KeyMsg:
-		if msg.String() == "q" || msg.String() == "ctrl+c" {
+		if msg.String() == global.Config.Key.Quit {
 			utils.Debugf("exting the htty program...")
 			return &app, tea.Quit
 		}
-		if msg.String() == "tab" {
+		if msg.String() == global.Config.Key.Nextpanel {
 			utils.PanelFocusNext(&global.CurrentPanelID)				
 		}
 	}	
@@ -41,9 +42,6 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (app App) View() string {
-	if app.width == 0 || app.height == 0 {
-		return ""
-	}
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		app.sidePane.View(),
@@ -51,12 +49,13 @@ func (app App) View() string {
 	)
 }
 
-func (app *App) SetSize(width int, height int) {
-	app.width = width 
-	app.height = height 
-	//set children bounds 
-	sideWidth := 30
-	mainWidth := app.width - sideWidth
-	app.sidePane.SetSize(sideWidth, app.height, 2)
-	app.mainPane.SetSize(mainWidth, app.height, 2)
+func (app *App) SetSize() {
+	app.sidePane.SetSize(
+		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
+		utils.GetPercent(global.Config.Panels.Side.Height, global.AppHeight),
+	)
+	app.mainPane.SetSize(
+		utils.GetPercent(global.Config.Panels.Main.Width, global.AppWidth), 
+		utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight), 
+	)
 }

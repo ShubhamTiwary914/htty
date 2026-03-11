@@ -1,10 +1,12 @@
 package htty
 
 import (
+	global "htty/globals"
 	components "htty/panels/components"
 	types "htty/types"
 	utils "htty/utils"
 
+	// global "htty/globals"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )		
@@ -35,7 +37,7 @@ func (rq *RequestPane) Update(msg tea.Msg) (tea.Cmd){
 }
 
 func (rq RequestPane) View() string {
-	style := utils.SetFullBorder(rq.width-2, rq.height, lipgloss.Color(utils.GetPanelFocusColor(types.PANEL_REQ_ID))) 
+	style := utils.SetFullBorder(rq.width-2, rq.height, lipgloss.Color(utils.GetPanelFocusColor(global.PANEL_REQ_ID))) 
 	firstRow := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		rq.method.View(),
@@ -54,41 +56,51 @@ func (rq RequestPane) View() string {
 	return style.Render(requestSubpanels)
 }
 
-func (rq *RequestPane) SetSize(w int, h int){
-	//TODO: instead of raw dogging sizes, its better to load based off config, with relative sizing in %s 
-	rq.width = w
-	rq.height = h
-	rq.method.SetSize(w/11, h/12)
-	rq.url.SetSize(int(float64(w)/1.25), h/12)
-	rq.headers.SetSize(w/3, int(float64(h)/1.5))
-	rq.body.SetSize(int(float64(w)/1.8), int(float64(h)/1.5))
+func (rq *RequestPane) SetSize(width int, height int){
+	rq.width = width; rq.height = height
+	rq.method.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.height),
+	)
+	rq.url.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_url.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_url.Height, rq.height),
+	)
+	rq.headers.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_headers.Height, rq.height),
+	)
+	rq.body.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_body.Width, rq.width), 
+		utils.GetPercent(global.Config.Panels.Main_req_body.Height, rq.height),
+	)
 }
 
 //config for all the subpanels for Request
 func RequestSubPanels() (components.TextPane, components.TextPane, components.TextPane, components.TextPane) {
 	//TODO: these config are better off handled by the config manager instead of this
 	var methodTypeComponent = components.TextPane{
-		CharLimit: 10, PanelID: types.PANEL_REQ_METHOD_ID, 
+		CharLimit: 10, PanelID: global.PANEL_REQ_METHOD_ID, 
 		Placeholder: "Method", Showline: false,
 		Border: types.BorderConfig{Bottom: true},
 		Margin: types.MarginConfig{Left:3, Top: 1},
 	}
 	var urlPathComponent = components.TextPane{
-		CharLimit: 1024, PanelID: types.PANEL_REQ_URL_ID,
+		CharLimit: 1024, PanelID: global.PANEL_REQ_URL_ID,
 		Placeholder: "http://example/com", Showline: false,
 		Border: types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		Margin: types.MarginConfig{Left: 5},
 	}
 	var headersComponent = components.TextPane{
 		CharLimit: 1024,
-		PanelID: types.PANEL_REQ_HEADERS, Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
+		PanelID: global.PANEL_REQ_HEADERS, Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
 		Showline: true,
 		Border: types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		Margin: types.MarginConfig{Left: 3, Top: 1},
 	}
 	var bodyComponent = components.TextPane{
 		CharLimit: 2048,
-		PanelID: types.PANEL_REQ_BODY, Placeholder: "request body content",
+		PanelID: global.PANEL_REQ_BODY, Placeholder: "request body content",
 		Showline: true,
 		Border: types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		Margin: types.MarginConfig{Left: 4, Top: 1},

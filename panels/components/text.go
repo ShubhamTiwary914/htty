@@ -2,9 +2,9 @@ package htty
 
 import (
 	types "htty/types"
-	utils "htty/utils"
 
 	global "htty/globals"
+	utils "htty/utils"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -35,7 +35,7 @@ func (text *TextPane) Init() tea.Cmd {
 
 func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
-	focused := global.CurrentPanelID == types.PANEL_FOCUS_IDS[text.PanelID]
+	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[text.PanelID]
 	//set a line focus pointer when this panel is focused on
 	if focused {
 		text.Input.Focus()
