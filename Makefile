@@ -4,7 +4,7 @@ LOGFILE=htty.log
 
 .PHONY: dev
 dev:
-	LOGLEVEL=all go run .
+	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json"  go run .
 
 .PHONY: debug 
 debug:
@@ -41,7 +41,7 @@ help:
 	@echo "Usage: make [Target]"
 	@echo ""
 	@echo "[Targets]"
-	@echo "dev         run htty local in dev mode (all logs - info, warn, error, debug are shown)"
+	@echo "dev         run htty local in dev mode (all logs - info, warn, error, debug are shown) with ./config.json"
 	@echo "debug       run htty local in debug mode"
 	@echo "build       build htty executable"
 	@echo "test        run test from ./tests folder"

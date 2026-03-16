@@ -4,14 +4,14 @@
     "unfocus_border_color": "240"
   },
   "panels": {
-    "main": {
+    "side": {
       "id": 0,
-      "width": 80,
+      "width": 20,
       "height": 100
     },
-    "side": {
+    "main": {
       "id": 1,
-      "width": 20,
+      "width": 75,
       "height": 100
     },
     "main_req": {
@@ -20,27 +20,27 @@
       "height": 50
     },
     "main_req_method": {
-      "id": 4,
+      "id": 3,
       "width": 10,
       "height": 2
     },
     "main_req_url": {
-      "id": 5,
+      "id": 4,
       "width": 75,
       "height": 2
     },
     "main_req_headers": {
-      "id": 6,
+      "id": 5,
       "width": 40,
       "height": 70
     },
     "main_req_body": {
-      "id": 7,
+      "id": 6,
       "width": 45,
       "height": 70
     },
     "main_res": {
-      "id": 8,
+      "id": 7,
       "width": 100,
       "height": 40
     }
