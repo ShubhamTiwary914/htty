@@ -1,8 +1,3 @@
-/*
-	prefix completions taking some prefix substring to get K closest & shortest results from a file source
-	ex: hel --> [hell, hello, ...]
-*/
-
 package htty
 
 import (
@@ -13,19 +8,42 @@ import (
 	"strings"
 )
 
-func PrefixClosestSearch(substr string, filePath string) ([]string){
-	return []string{}	
+/*
+	Prefix completions taking some prefix substring to get closest & shortest results from a file source
+	ex: hel --> [hell, hello, Hello...] (NOTE: it is case insensitive)
+*/
+func PrefixClosestSearch(substr string, filePath string) ([]string, error){
+	var words []string
+	var err error
+	words, err = ReadTextLines_intoList(filePath)
+	if err != nil { return nil, err; }
+
+	//first index where prefix matches
+	prefix := strings.ToLower(substr)
+	start := sort.Search(len(words), func(i int) bool {
+		return strings.ToLower(words[i]) >= prefix
+	})
+	// no possible matches
+	if start >= len(words) || !strings.HasPrefix(strings.ToLower(words[start]), prefix) {
+		return []string{}, nil
+	}
+	// scan forward until prefix doesn't match
+	end := start
+	for end < len(words) && strings.HasPrefix(strings.ToLower(words[end]), prefix) {
+		end++
+	}
+	return words[start:end], nil
 }
 
 /*	Read from .txt file that have word per line
 		Returns (string array of res[i]= ith line of file)
 */
-func ReadTextLines_intoList(filePath string)([]string){
+func ReadTextLines_intoList(filePath string) ([]string, error){
 	var words[] string
 	file, err := os.Open(filePath)
 	if err != nil {
 		Errorf("file %s doesn't exist!", filePath)	
-		panic(err)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -33,16 +51,19 @@ func ReadTextLines_intoList(filePath string)([]string){
 	for ptr.Scan(){
 		words = append(words, ptr.Text())
 	}
-	return words
+	return words, nil 
 }
 
 // Dump word into file at (filePath) with insertion sorted manner
-func Insert_SortedFile(word string, filePath string){
+func Insert_SortedFile(word string, filePath string) error {
 	//sort line words string[] with case sensitivity (apple != Apple)
-	var words []string = ReadTextLines_intoList(filePath)		
+	var words []string;
+	var err error;
+	words, err = ReadTextLines_intoList(filePath)
+
 	if slices.Contains(words, word) {
 		//skip if word already exists
-		return;
+		return nil;
 	}
 	words = append(words, word)
 	sort.Slice(words, func(i, j int) bool {
@@ -58,7 +79,7 @@ func Insert_SortedFile(word string, filePath string){
 	file, err := os.Create(filePath)
 	if err != nil {
 		Errorf("file %s unable to create!", filePath)	
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
@@ -67,14 +88,15 @@ func Insert_SortedFile(word string, filePath string){
 	for lineidx, word := range words {
 		if _, err := wptr.WriteString(word + "\n"); err != nil {
 			Errorf("unable to write word %s into file %s (line %d)", word, filePath, lineidx)	
-			panic(err)
+			return err;	
 		}
 	}
 	//push saved buffer onto file
 	if err := wptr.Flush(); err != nil {
 		Errorf("unable to write onto file %s", filePath)
-		panic(err)
+		return err;
 	}
+	return nil
 }
 
 func CheckFileExists(filePath string) (bool) {
@@ -85,4 +107,3 @@ func CheckFileExists(filePath string) (bool) {
 	file.Close()	
 	return true
 }
-
