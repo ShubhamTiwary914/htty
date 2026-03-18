@@ -1,0 +1,29 @@
+name: Kitsu AI Maintainer
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  run-kitsu:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Kitsu Action
+        uses: Souvikns/kitsu@main
+        with:
+          provider: gemini 
+          api_key: ${{ secrets.GEMINI_APIKEY }}
+          model: gemini-2.5-flash
+          github_token: ${{ secrets.GITHUB_TOKEN }}
