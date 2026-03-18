@@ -4,7 +4,7 @@ LOGFILE=htty.log
 
 .PHONY: dev
 dev:
-	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json"  go run .
+	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)" go run .
 
 .PHONY: debug 
 debug:
@@ -33,7 +33,14 @@ logwatch_new:
 .PHONY: test
 test: 
 	go test ./tests -v
-	
+
+.PHONY: rough
+roughtest:
+	CACHE_PREFIX="$(PWD)" go test ./tests/rough_test.go -v
+
+.PHONY: docslive
+docslive:
+	go doc -http
 
 .PHONY: help
 help:
@@ -45,5 +52,6 @@ help:
 	@echo "debug       run htty local in debug mode"
 	@echo "build       build htty executable"
 	@echo "test        run test from ./tests folder"
+	@echo "roughtest   run test for only the rough ./tests/rough_test.go"
 	@echo "logwatch    follow $(LOGFILE) for viewing live logs" 
-
+	@echo "docslive    gopls docs for htty project in live webapp"
