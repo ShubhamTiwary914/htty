@@ -30,10 +30,3 @@ type MarginConfig struct {
 	Left   int  
 	Right  int 
 }
-
-const (
-	BORDER_UP    = "BORDER_UP"
-	BORDER_DOWN  = "BORDER_DOWN"
-	BORDER_LEFT  = "BORDER_LEFT"
-	BORDER_RIGHT = "BORDER_RIGHT"
-)

@@ -7,6 +7,9 @@ import (
 )
 
 func TestPanelFocusControl(tt *testing.T){
+	var err error
+	global.PANEL_FOCUS_IDS, err = utils.GetPanelIDsMap(global.Config)
+	if err != nil { tt.Errorf("unable to initialize panels list") }
 	var currentPanel int = 0	
 	//forwards
 	utils.PanelFocusNext(&currentPanel)

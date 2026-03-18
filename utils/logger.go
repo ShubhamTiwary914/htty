@@ -34,17 +34,17 @@ func Logf(level string, format string, args ...interface{}) {
 
 // Logf with LOGLEVEL=debug 
 func Debugf(format string, args ...interface{}) {
-	Logf(types.LOG_DEBUG, format, args...)
+	Logf(global.LOG_DEBUG, format, args...)
 }
 
 // Logf with LOGLEVEL=info
 func Infof(format string, args ...interface{}) {
-	Logf(types.LOG_INFO, format, args...)
+	Logf(global.LOG_INFO, format, args...)
 }
 
 // Logf with LOGLEVEL=error
 func Errorf(format string, args ...interface{}) {
-	Logf(types.LOG_ERROR, format, args...)
+	Logf(global.LOG_ERROR, format, args...)
 }
 
 
@@ -71,10 +71,10 @@ func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
 // internal method for Logf to check if the log is allowed in this "LOGLEVEL" 
 // (ex LOGLEVEL=all means allow all, LOGLEVEL=debug means allow only debug) 
 func assertAllowedLogLevel(level string) bool {
-	if os.Getenv(types.LOG_ENVNAME) == types.LOG_ALL {
+	if os.Getenv(global.LOG_ENVNAME) == global.LOG_ALL {
 		return true;	
 	}		
-	if os.Getenv(types.LOG_ENVNAME) == level {
+	if os.Getenv(global.LOG_ENVNAME) == level {
 		return true;	
 	}
 	return false

@@ -5,6 +5,7 @@ import (
 	"io"
 	"time"
 	"strings"
+	global "htty/globals"
 	types "htty/types"
 )  
 
@@ -19,7 +20,7 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 		Errorf("HTTP method type not valid: %s", httpObj.Method)			
 	}
 	client := &http.Client{
-		Timeout: time.Duration(types.REQUEST_TIMEOUT) * time.Second,
+		Timeout: time.Duration(global.REQUEST_TIMEOUT) * time.Second,
 	}
 	//encapsulate request
 	var bodyBuffer io.Reader
@@ -75,7 +76,7 @@ func HeaderKVparser(rawHeaders string) map[string]string{
 
 //check if http method is of standard type(GET/POST/PUT/etc..)
 func AssertHTTPMethodType(method string) bool{
-	_, found := types.HTTP_METHOD[method]
+	_, found := global.HTTP_METHOD[method]
 	if found {
 		return true;
 	}

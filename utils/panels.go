@@ -142,13 +142,13 @@ func SetBorderOneSide(width, height int, color lipgloss.Color, direction string)
 		Right:  false,
 	}
 	switch direction {
-	case types.BORDER_UP:
+	case global.BORDER_UP:
 		cfg.Top = true
-	case types.BORDER_DOWN:
+	case global.BORDER_DOWN:
 		cfg.Bottom = true
-	case types.BORDER_LEFT:
+	case global.BORDER_LEFT:
 		cfg.Left = true
-	case types.BORDER_RIGHT:
+	case global.BORDER_RIGHT:
 		cfg.Right = true
 	}
 
