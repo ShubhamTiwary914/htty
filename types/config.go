@@ -40,7 +40,8 @@ type HttyLogConfig struct {
 }
 
 type HttyKeyConfig struct {
-	Quit        string
-	Nextpanel   string
-	Sendapicall string
+	Quit        	string
+	Nextpanel   	string
+	Sendapicall 	string
+	CompleteText 	string
 }

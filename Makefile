@@ -1,14 +1,14 @@
 #INFO: default logfile path, is configurable
-LOGFILE=htty.log
+LOGFILE=.logs/htty.log
 
 
 .PHONY: dev
 dev:
-	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)" go run .
+	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
 
 .PHONY: debug 
 debug:
-	LOGLEVEL=debug CONFIG_FILE="$(PWD)/config.json" go run .
+	LOGLEVEL=debug CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
 
 .PHONY: build
 build:

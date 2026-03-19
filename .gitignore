@@ -1,3 +1,5 @@
-build/**
-**.log
+.logs/
+**/.log
 
+.cache/
+**/.txt

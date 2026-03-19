@@ -20,7 +20,8 @@ type TextOptions struct {
 	Showline      bool
 	Border        types.BorderConfig
 	Margin        types.MarginConfig
-	OptionItems   []string // Static options to display
+	OptionBuffer   []string 
+	OptionsStore   []string   
 }
 
 func (text *TextOptions) Init() tea.Cmd {
@@ -44,8 +45,26 @@ func (text *TextOptions) Update(msg tea.Msg) tea.Cmd {
 		text.Input.Blur()
 		text.Input.Prompt = ""
 	}
+
+	switch msg := msg.(type) {
+	//auto resize to window dimensions
+	case tea.KeyMsg:
+		if msg.String() == global.Config.Key.CompleteText && focused && len(text.OptionBuffer)>=1{
+			text.Input.SetValue(text.OptionBuffer[0])
+			text.ClearOptions()
+			return cmd
+		}
+	}
 	
+	oldValue := text.Input.Value()
 	text.Input, cmd = text.Input.Update(msg)
+	if text.Input.Value() == "" {
+		text.ClearOptions()
+		return cmd;
+	}
+	if text.Input.Value() != oldValue {
+		text.SetOptions(text.Input.Value())
+	}
 	return cmd
 }
 
@@ -75,7 +94,7 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[text.PanelID]
 	
 	// If not focused or no options, return nil layer
-	if !focused || len(text.OptionItems) == 0 {
+	if !focused || len(text.OptionBuffer) == 0 {
 		return baseView, nil
 	}
 
@@ -87,7 +106,7 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 		Width(text.Width).
 		Padding(0, 1)
 
-	optionsText := strings.Join(text.OptionItems, "\n")
+	optionsText := strings.Join(text.OptionBuffer, "\n")
 	optionsBox := optionsStyle.Render(optionsText)
 
 	// Return the options layer with Z=2 (above base panels)
@@ -96,8 +115,6 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	return baseView, optionsLayer
 }
 
-
-
 func (text *TextOptions) SetSize(width, height int) {
 	text.Width = width
 	text.Height = height
@@ -105,10 +122,11 @@ func (text *TextOptions) SetSize(width, height int) {
 	text.Input.SetHeight(height)
 }
 
-func (text *TextOptions) SetOptions(options []string) {
-	text.OptionItems = options
+//change the Options[] with new suggestions
+func (text *TextOptions) SetOptions(inputstr string) {
+	text.OptionBuffer, _ = utils.PrefixClosestSearch_withOptions(inputstr, text.OptionsStore)	
 }
 
-func (text *TextOptions) ClearOptions() {
-	text.OptionItems = nil
+func (text *TextOptions) ClearOptions(){
+	text.OptionBuffer = nil
 }

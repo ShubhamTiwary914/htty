@@ -18,6 +18,7 @@ var CurrentPanelID = PANEL_FOCUS_IDS[PANEL_REQ_ID]
 var Logger = log.New(os.Stdout, "", 0)
 var Config types.HttyConfig
 
+var CachePrefix string
 var AppWidth int
 var AppHeight int
 

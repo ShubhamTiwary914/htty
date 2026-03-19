@@ -6,8 +6,8 @@ import (
 	types "htty/types"
 	utils "htty/utils"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type RequestPane struct {
@@ -24,7 +24,9 @@ type RequestPane struct {
 func (rq *RequestPane) Init() tea.Cmd {
 	utils.Infof("request panel initialization")
 	rq.method, rq.url, rq.headers, rq.body = RequestSubPanels()
+	rq.method.OptionsStore, _ = utils.ReadTextLines_intoList(global.CachePrefix + "/method.txt")
 	rq.method.Init()
+
 	rq.url.Init()
 	rq.headers.Init()
 	rq.body.Init()
@@ -91,7 +93,6 @@ func RequestSubPanels() (components.TextOptions, components.TextPane, components
 		Placeholder: "Method",
 		Showline:    false,
 		Border:      types.BorderConfig{Bottom: true},
-		OptionItems: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
 	}
 	var urlPathComponent = components.TextPane{
 		CharLimit:   1024,
@@ -114,7 +115,7 @@ func RequestSubPanels() (components.TextOptions, components.TextPane, components
 		Placeholder: "request body content",
 		Showline:    true,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		Margin:      types.MarginConfig{Left: 2, Bottom: 2},
+		Margin:      types.MarginConfig{Left: 0, Bottom: 2, Right: 10},
 	}
 	return methodTypeComponent, urlPathComponent, headersComponent, bodyComponent
 }

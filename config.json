@@ -48,7 +48,7 @@
 		},
 		"main_req_body": {
 			"id": 4,
-			"width": 40,
+			"width": 50,
 			"height": 75,
 			"margin": [9,4],
 			"layer": 0
@@ -63,12 +63,13 @@
 	},
 	"log": {
 		"allow": true,
-		"file": "htty.log",
+		"file": ".logs/htty.log",
 		"level": "all"
 	},
 	"key": {
 		"quit": "q",
 		"nextpanel": "tab",
-		"sendapicall": "alt+enter"
+		"sendapicall": "alt+enter",
+		"completeText": "enter"
 	}
 }
