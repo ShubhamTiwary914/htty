@@ -5,7 +5,7 @@ import (
 	global "htty/globals"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 
@@ -17,7 +17,7 @@ func GetPercent(percentage int, source int) int{
 //(present at types/panels -> PANEL_FOCUS_IDS)
 func PanelFocusNext(focusID *int){
 	(*focusID)++
-	if (*focusID >= len(global.PANEL_FOCUS_IDS)){
+	if (*focusID >= global.FOCUSABLE_PANELS){
 		(*focusID) = 0
 	}
 }
@@ -27,7 +27,7 @@ func PanelFocusNext(focusID *int){
 func PanelFocusPrev(focusID *int){
 	(*focusID)--
 	if (*focusID < 0){
-		(*focusID) = len(global.PANEL_FOCUS_IDS)-1
+		(*focusID) = global.FOCUSABLE_PANELS-1
 	}
 }
 
@@ -80,13 +80,11 @@ func GetPanelFocusColor(panelkey interface{}) string {
 	return global.Config.Common.Unfocus_border_color
 }
 
-
-// General main method to set lipgloss border for panels
 func SetBorder(cfg types.BorderConfig) lipgloss.Style {
 	style := lipgloss.NewStyle().
 		Width(cfg.Width).
 		Height(cfg.Height)
-	// default enabled = true
+	
 	enabled := true
 	if cfg.Enabled {
 		enabled = true
@@ -94,11 +92,12 @@ func SetBorder(cfg types.BorderConfig) lipgloss.Style {
 	if !enabled {
 		return style
 	}
+	
 	border := cfg.Border
 	if border == (lipgloss.Border{}) {
 		border = lipgloss.NormalBorder()
 	}
-	// default sides = true unless explicitly set
+	
 	top := true
 	bottom := true
 	left := true
@@ -109,21 +108,17 @@ func SetBorder(cfg types.BorderConfig) lipgloss.Style {
 		left = cfg.Left
 		right = cfg.Right
 	}
-	style = style.
-		Border(border).
-		BorderTop(top).
-		BorderBottom(bottom).
-		BorderLeft(left).
-		BorderRight(right)
+	
+	// CHANGED: Use single Border() call with all sides
+	style = style.Border(border, top, right, bottom, left)
 
 	if cfg.Color != "" {
-		style = style.BorderForeground(cfg.Color)
+		style = style.BorderForeground(lipgloss.Color(cfg.Color))
 	}
 	return style
 }
 
-
-func SetFullBorder(width, height int, color lipgloss.Color) lipgloss.Style {
+func SetFullBorder(width, height int, color string) lipgloss.Style {
 	return SetBorder(types.BorderConfig{
 		Width:  width,
 		Height: height,
@@ -131,7 +126,7 @@ func SetFullBorder(width, height int, color lipgloss.Color) lipgloss.Style {
 	})
 }
 
-func SetBorderOneSide(width, height int, color lipgloss.Color, direction string) lipgloss.Style {
+func SetBorderOneSide(width, height int, color string, direction string) lipgloss.Style {
 	cfg := types.BorderConfig{
 		Width:  width,
 		Height: height,
@@ -153,4 +148,32 @@ func SetBorderOneSide(width, height int, color lipgloss.Color, direction string)
 	}
 
 	return SetBorder(cfg)
+}
+
+/*
+	Creates a new layer of lipgloss compositor 
+	(ref - https://github.com/charmbracelet/lipgloss?tab=readme-ov-file#compositing)
+
+	(pane types.BasePanel) - what panel, since that's View() is also invoked
+
+	(paneCfg) - which panel config, since that configs like margin, size is taken
+
+	(offsets) - x, y offsets for margin if needed
+
+	Returns a new lipgloss layer to be Rendered
+*/
+func CreateNewLayer(pane types.BasePanel, paneCfg types.HttyPanel, offsets ...int) *lipgloss.Layer {
+	var xoff int = 0
+	var yoff int = 0
+	if(len(offsets) >= 2){
+		yoff += offsets[1]
+	}
+	if(len(offsets) >= 1){
+		xoff += offsets[0]
+	}
+	var newlayer *lipgloss.Layer = lipgloss.NewLayer(pane.View()).
+					X(paneCfg.Margin[0] + xoff).
+					Y(paneCfg.Margin[1] + yoff).
+					Z(paneCfg.Layer)
+	return newlayer 
 }

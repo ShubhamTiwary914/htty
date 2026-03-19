@@ -1,5 +1,6 @@
 package htty
 
+
 type HttyConfig struct {
 	Common HttyCommonConfig
 	Panels HttyPanelsConfig
@@ -9,6 +10,7 @@ type HttyConfig struct {
 
 type HttyCommonConfig struct {
 	Focus_border_color string
+	Background_color string
 	Unfocus_border_color string
 }
 
@@ -16,6 +18,8 @@ type HttyPanel struct {
 	ID        int
 	Width     int
 	Height    int
+	Margin    [2]int //[x,y] 
+	Layer     int
 }
 
 type HttyPanelsConfig struct {

@@ -2,7 +2,7 @@ package htty
 
 import (
 	"github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 //mother of panel i.e: the interface that every panel type should follow
@@ -17,7 +17,7 @@ type BorderConfig struct {
 	Width int
 	Height int
 	Border  lipgloss.Border // if zero, use NormalBorder
-	Color   lipgloss.Color
+	Color  string
 	Top    bool
 	Bottom bool
 	Left   bool

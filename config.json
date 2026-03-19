@@ -1,58 +1,74 @@
 {
-  "common": {
-    "focus_border_color": "FFF",
-    "unfocus_border_color": "240"
-  },
-  "panels": {
-    "side": {
-      "id": 0,
-      "width": 20,
-      "height": 100
-    },
-    "main": {
-      "id": 1,
-      "width": 75,
-      "height": 100
-    },
-    "main_req": {
-      "id": 2,
-      "width": 100,
-      "height": 50
-    },
-    "main_req_method": {
-      "id": 3,
-      "width": 10,
-      "height": 2
-    },
-    "main_req_url": {
-      "id": 4,
-      "width": 75,
-      "height": 2
-    },
-    "main_req_headers": {
-      "id": 5,
-      "width": 40,
-      "height": 70
-    },
-    "main_req_body": {
-      "id": 6,
-      "width": 45,
-      "height": 70
-    },
-    "main_res": {
-      "id": 7,
-      "width": 100,
-      "height": 40
-    }
-  },
-  "log": {
-    "allow": true,
-    "file": "htty.log",
-    "level": "all"
-  },
-  "key": {
-    "quit": "q",
-    "nextpanel": "tab",
-    "sendapicall": "alt+enter"
-  }
+	"common": {
+		"focus_border_color": "FFF",
+		"background_color": "000",
+		"unfocus_border_color": "240"
+	},
+	"panels": {
+		"side": {
+			"id": 0,
+			"width": 20,
+			"height": 100,
+			"margin": [0,0],
+			"layer": 0
+		},
+		"main": {
+			"width": 75,
+			"height": 100,
+			"margin": [0,0],
+			"layer": 0
+		},
+		"main_req": {
+			"width": 100,
+			"height": 50,
+			"margin": [0,0],
+			"layer": 0
+		},
+		"main_req_method": {
+			"id": 1,
+			"width": 10,
+			"height": 2,
+			"margin": [3,1],
+			"layer": 1
+		},
+		"main_req_url": {
+			"id": 2,
+			"width": 75,
+			"height": 2,
+			"margin": [10,1],
+			"layer": 0
+
+		},
+		"main_req_headers": {
+			"id": 3,
+			"width": 40,
+			"height": 75,
+			"margin": [3,4],
+			"layer": 0
+		},
+		"main_req_body": {
+			"id": 4,
+			"width": 40,
+			"height": 75,
+			"margin": [9,4],
+			"layer": 0
+		},
+		"main_res": {
+			"id": 5,
+			"width": 100,
+			"height": 40,
+			"margin": [0,0],
+			"layer": 0
+		}
+	},
+	"log": {
+		"allow": true,
+		"file": "htty.log",
+		"level": "all"
+	},
+	"key": {
+		"quit": "q",
+		"nextpanel": "tab",
+		"sendapicall": "alt+enter"
+	}
 }

@@ -1,30 +1,29 @@
 package htty
 
 import (
-	utils "htty/utils"
 	global "htty/globals"
+	utils "htty/utils"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type SidePane struct {
-	width int 
+	width  int
 	height int
 }
 
 func (side SidePane) Init() tea.Cmd {
-	return nil;
-} 
+	return nil
+}
 
-func (side *SidePane) Update(msg tea.Msg) (tea.Cmd) {
-	return nil;
+func (side *SidePane) Update(msg tea.Msg) tea.Cmd {
+	return nil
 }
 
 func (side SidePane) View() string {
-	style := utils.SetFullBorder(side.width-2, side.height-2, 
-		lipgloss.Color(utils.GetPanelFocusColor(global.PANEL_SIDE_ID)),
-	)  
-	return style.Render("Side Panel") 
+	style := utils.SetFullBorder(side.width-2, side.height-2,
+		utils.GetPanelFocusColor(global.PANEL_SIDE_ID),
+	)
+	return style.Render("Side Panel")
 }
 
 func (side *SidePane) SetSize(width int, height int) {

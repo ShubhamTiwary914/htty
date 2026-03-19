@@ -45,6 +45,7 @@ const (
 
 const (
 	REQUEST_TIMEOUT int = 10
+	FOCUSABLE_PANELS int  = 6
 )
 
 const (

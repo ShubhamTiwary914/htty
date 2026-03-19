@@ -8,7 +8,7 @@ dev:
 
 .PHONY: debug 
 debug:
-	LOGLEVEL=debug go run .
+	LOGLEVEL=debug CONFIG_FILE="$(PWD)/config.json" go run .
 
 .PHONY: build
 build:
