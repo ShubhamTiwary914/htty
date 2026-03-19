@@ -23,7 +23,7 @@ func (side SidePane) View() string {
 	style := utils.SetFullBorder(side.width-2, side.height-2,
 		utils.GetPanelFocusColor(global.PANEL_SIDE_ID),
 	)
-	return style.Render("Side Panel")
+	return style.Render("")
 }
 
 func (side *SidePane) SetSize(width int, height int) {
