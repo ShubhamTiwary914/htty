@@ -38,7 +38,7 @@ func (res *ResponsePane) SetResponse(body string) {
 
 func NewResponseTextComponent() components.TextPane {
 	var responseTextComponent = components.TextPane{
-		CharLimit:   1024,
+		CharLimit:   2147483647,
 		PanelID:     global.PANEL_RES,
 		Placeholder: "response will appear here... (API call with ctrl+enter)",
 		Showline:    false,

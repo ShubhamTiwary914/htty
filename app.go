@@ -34,7 +34,7 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.View() // Rebuild compositor on resize
 	case tea.KeyMsg:
 		if msg.String() == global.Config.Key.Quit {
-			utils.Debugf("exiting the htty program...")
+			utils.Infof("exiting the htty program...")
 			return &app, tea.Quit
 		}
 		if msg.String() == global.Config.Key.Nextpanel {
@@ -54,7 +54,8 @@ func (app App) View() string {
 		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
 	)	
 	app.compositor = lipgloss.NewCompositor(sideLayer, mainLayer)
-	return app.compositor.Render()
+	appStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return appStyle.Render(app.compositor.Render())
 }
 
 func (app *App) SetSize() {

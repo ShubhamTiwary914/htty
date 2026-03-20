@@ -55,7 +55,9 @@ const (
 	LOG_ERROR = "error"
 	LOG_DEBUG = "debug"
 	LOG_ALL   = "all"
-	LOG_ENVNAME = "LOGLEVEL"
+)
+var (
+	LOGLEVEL  = "info"
 )
 
 const (

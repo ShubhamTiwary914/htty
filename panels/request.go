@@ -15,7 +15,7 @@ type RequestPane struct {
 	focusIndex    int
 	initialized   bool
 	method        components.TextOptions
-	url           components.TextPane
+	url           components.TextOptions
 	headers       components.TextPane
 	body          components.TextPane
 	compositor    *lipgloss.Compositor
@@ -24,9 +24,7 @@ type RequestPane struct {
 func (rq *RequestPane) Init() tea.Cmd {
 	utils.Infof("request panel initialization")
 	rq.method, rq.url, rq.headers, rq.body = RequestSubPanels()
-	rq.method.OptionsStore, _ = utils.ReadTextLines_intoList(global.CachePrefix + "/method.txt")
 	rq.method.Init()
-
 	rq.url.Init()
 	rq.headers.Init()
 	rq.body.Init()
@@ -47,21 +45,28 @@ func (rq *RequestPane) buildCompositor() {
 	methodLayer := utils.CreateNewLayer(&rq.method, global.Config.Panels.Main_req_method)
 	_, methodOptionsLayer := rq.method.ViewWithOptions(true)
 	urlLayer := utils.CreateNewLayer(&rq.url, global.Config.Panels.Main_req_url, methodWidth)
+	_, urlOptionsLayer := rq.url.ViewWithOptions(true); 
+
 	headersLayer := utils.CreateNewLayer(&rq.headers, global.Config.Panels.Main_req_headers, 0, methodHeight)
 	bodyLayer := utils.CreateNewLayer(&rq.body, global.Config.Panels.Main_req_body, headersWidth, methodHeight)	
 	layers := []*lipgloss.Layer{methodLayer, urlLayer, headersLayer, bodyLayer}
 
 	// add options overlay if focused
 	if methodOptionsLayer != nil {
-		methodOptionsLayer.X(3).Y(methodHeight + 2)
+		methodOptionsLayer.X(3).Y(methodHeight+2)
 		layers = append(layers, methodOptionsLayer)
 	}
+	if urlOptionsLayer != nil {
+		urlOptionsLayer.X(global.Config.Panels.Main_req_url.Margin[0]+11).Y(methodHeight+ 2)
+		layers = append(layers, urlOptionsLayer)
+	}	
 	rq.compositor = lipgloss.NewCompositor(layers...)
 }
 
 func (rq *RequestPane) View() string {
 	rq.buildCompositor()
-	return rq.compositor.Render()
+	reqStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return reqStyle.Render(rq.compositor.Render())
 }
 
 func (rq *RequestPane) SetSize(width int, height int) {
@@ -86,20 +91,23 @@ func (rq *RequestPane) SetSize(width int, height int) {
 }
 
 //config for all the subpanels for Request
-func RequestSubPanels() (components.TextOptions, components.TextPane, components.TextPane, components.TextPane) {
+func RequestSubPanels() (components.TextOptions, components.TextOptions, components.TextPane, components.TextPane) {
 	var methodTypeComponent = components.TextOptions{
 		CharLimit:   10,
 		PanelID:     global.PANEL_REQ_METHOD_ID,
 		Placeholder: "Method",
 		Showline:    false,
 		Border:      types.BorderConfig{Bottom: true},
+		OptionsFilePath: global.CachePrefix + "/method.txt",
 	}
-	var urlPathComponent = components.TextPane{
+	var urlPathComponent = components.TextOptions{
 		CharLimit:   1024,
 		PanelID:     global.PANEL_REQ_URL_ID,
 		Placeholder: "http://example/com",
 		Showline:    false,
 		Border:      types.BorderConfig{Bottom: true},
+		OptionsFilePath: global.CachePrefix + "/url.txt",
+		AllowSaveInput: true,
 	}
 	var headersComponent = components.TextPane{
 		CharLimit:   1024,

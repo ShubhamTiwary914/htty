@@ -83,7 +83,8 @@ func GetPanelFocusColor(panelkey interface{}) string {
 func SetBorder(cfg types.BorderConfig) lipgloss.Style {
 	style := lipgloss.NewStyle().
 		Width(cfg.Width).
-		Height(cfg.Height)
+		Height(cfg.Height).
+		Background(lipgloss.Color(global.Config.Common.Background_color))
 	
 	enabled := true
 	if cfg.Enabled {

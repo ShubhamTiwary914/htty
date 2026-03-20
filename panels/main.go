@@ -50,8 +50,8 @@ func (main *MainPane) View() string {
 		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
 	)
 	main.compositor = lipgloss.NewCompositor(reqLayer, resLayer)
-
-	return main.compositor.Render()
+	mainStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return mainStyle.Render(main.compositor.Render())
 }
 
 func (main *MainPane) SetSize(width int, height int) {

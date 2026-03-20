@@ -12,6 +12,7 @@ type HttyCommonConfig struct {
 	Focus_border_color string
 	Background_color string
 	Unfocus_border_color string
+	Textoptions_selection_color string
 }
 
 type HttyPanel struct {
@@ -44,4 +45,6 @@ type HttyKeyConfig struct {
 	Nextpanel   	string
 	Sendapicall 	string
 	CompleteText 	string
+	Textoptions_prev string
+	Textoptions_next string
 }

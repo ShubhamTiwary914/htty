@@ -1,8 +1,9 @@
 {
 	"common": {
-		"focus_border_color": "FFF",
-		"background_color": "000",
-		"unfocus_border_color": "240"
+		"focus_border_color": "#e55561",
+		"background_color": "#000",
+		"unfocus_border_color": "240",
+		"textoptions_selection_color": "#e55561"
 	},
 	"panels": {
 		"side": {
@@ -12,6 +13,7 @@
 			"margin": [0,0],
 			"layer": 0
 		},
+
 		"main": {
 			"width": 75,
 			"height": 100,
@@ -53,6 +55,8 @@
 			"margin": [9,4],
 			"layer": 0
 		},
+
+
 		"main_res": {
 			"id": 5,
 			"width": 100,
@@ -70,6 +74,8 @@
 		"quit": "q",
 		"nextpanel": "tab",
 		"sendapicall": "alt+enter",
-		"completeText": "enter"
+		"completeText": "enter",
+		"textoptions_prev": "up",
+		"textoptions_next": "down"
 	}
 }

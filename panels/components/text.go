@@ -6,9 +6,9 @@ import (
 	global "htty/globals"
 	utils "htty/utils"
 
+	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
-	lipgloss "charm.land/lipgloss/v2"
 )
 
 type TextPane struct {
@@ -29,7 +29,7 @@ func (text *TextPane) Init() tea.Cmd {
 	input.SetHeight(text.Height)
 	input.CharLimit = text.CharLimit
 	input.Prompt = ""
-	text.Input = input
+	text.Input = input	
 	return nil
 }
 
@@ -53,7 +53,8 @@ func (text TextPane) View() string {
 		//adds highlight on border when focused on
 		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
 	).Margin(
-		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left)
+		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
+	).Background(lipgloss.Color(global.Config.Common.Background_color)) 
 	return style.Render(text.Input.View())
 }
 

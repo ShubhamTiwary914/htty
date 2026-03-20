@@ -9,18 +9,16 @@ htty:
 dev:
 	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
 
-.PHONY: debug 
+.phony: debug 
 debug:
 	LOGLEVEL=debug CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
 
 .PHONY: build
 build: htty
 
-
 .PHONY: runbuild
 runbuild:  build
 	CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" ./htty
-
 
 
 # logs & debugging --------------
@@ -51,7 +49,12 @@ roughtest:
 docslive:
 	go doc -http
 
-
+.PHONY: stats
+.ONESHELL:
+stats: build 
+	exec_size=$$(du -sh ./htty | awk '{print $$1}') 
+	@echo ""
+	@echo "binary(htty) size: $$exec_size"
 
 .PHONY: help
 help:
@@ -67,3 +70,4 @@ help:
 	@echo "roughtest   run test for only the rough ./tests/rough_test.go"
 	@echo "logwatch    follow $(LOGFILE) for viewing live logs" 
 	@echo "docslive    gopls docs for htty project in live webapp"
+	@echo "stats       stats like bin size, other utilities, ..."
