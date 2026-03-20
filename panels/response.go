@@ -1,15 +1,10 @@
-/*
-	wraps around text component but seperated since it probably needs to be extended off due to its importance
-	present as child of main panel
-*/
-
 package htty
 
 import (
 	components "htty/panels/components"
 	types "htty/types"
 	utils "htty/utils"
-	
+
 	global "htty/globals"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -29,7 +24,6 @@ func (res *ResponsePane) Update(msg tea.Msg) tea.Cmd {
 	return res.textpane.Update(msg)
 }
 
-
 func (res ResponsePane) View() string {
 	return res.textpane.View()
 }
@@ -42,12 +36,14 @@ func (res *ResponsePane) SetResponse(body string) {
 	res.textpane.Input.SetValue(body)
 }
 
-func NewResponseTextComponent() (components.TextPane) {
+func NewResponseTextComponent() components.TextPane {
 	var responseTextComponent = components.TextPane{
-		CharLimit: 1024, PanelID: global.PANEL_RES, 
-		Placeholder: "response will appear here... (API call with ctrl+enter)", Showline: false,
-		Border: types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		Margin: types.MarginConfig{Left:1,Top: 1},
+		CharLimit:   2147483647,
+		PanelID:     global.PANEL_RES,
+		Placeholder: "response will appear here... (API call with ctrl+enter)",
+		Showline:    false,
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		Margin:      types.MarginConfig{Left: 1, Top: 1},
 	}
-	return responseTextComponent 
+	return responseTextComponent
 }

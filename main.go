@@ -24,6 +24,8 @@ func __init() App {
 	if err != nil {
 		panic(err)			
 	}
+	global.LOGLEVEL = os.Getenv("LOGLEVEL")
+	global.CachePrefix = os.Getenv("CACHE_PREFIX")
 	global.PANEL_FOCUS_IDS, err = utils.GetPanelIDsMap(global.Config)
 	global.CurrentPanelID = global.PANEL_FOCUS_IDS[global.PANEL_REQ_METHOD_ID]
 	if err != nil {

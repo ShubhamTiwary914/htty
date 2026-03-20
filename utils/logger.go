@@ -71,10 +71,10 @@ func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
 // internal method for Logf to check if the log is allowed in this "LOGLEVEL" 
 // (ex LOGLEVEL=all means allow all, LOGLEVEL=debug means allow only debug) 
 func assertAllowedLogLevel(level string) bool {
-	if os.Getenv(global.LOG_ENVNAME) == global.LOG_ALL {
+	if global.LOGLEVEL == global.LOG_ALL {
 		return true;	
 	}		
-	if os.Getenv(global.LOG_ENVNAME) == level {
+	if global.LOGLEVEL == level {
 		return true;	
 	}
 	return false

@@ -1,19 +1,27 @@
 #INFO: default logfile path, is configurable
-LOGFILE=htty.log
+LOGFILE=.logs/htty.log
 
+# build & run --------------
+htty:
+	go build -o htty .
 
 .PHONY: dev
 dev:
-	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)" go run .
+	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
 
-.PHONY: debug 
+.phony: debug 
 debug:
-	LOGLEVEL=debug go run .
+	LOGLEVEL=debug CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
 
 .PHONY: build
-build:
-	go build -o htty .
+build: htty
 
+.PHONY: runbuild
+runbuild:  build
+	CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" ./htty
+
+
+# logs & debugging --------------
 .PHONY: logwatch
 logwatch:
 	tail -f $(LOGFILE)
@@ -28,8 +36,7 @@ logwatch_new:
 	$(MAKE) logwatch
 
 
-# yes this is not "recommended" pattern for tests in go, but simple to manage
-# recommended way is file.go should have file_test.go in same dir (but that is stupid)
+# tests & docs --------------
 .PHONY: test
 test: 
 	go test ./tests -v
@@ -42,16 +49,25 @@ roughtest:
 docslive:
 	go doc -http
 
+.PHONY: stats
+.ONESHELL:
+stats: build 
+	exec_size=$$(du -sh ./htty | awk '{print $$1}') 
+	@echo ""
+	@echo "binary(htty) size: $$exec_size"
+
 .PHONY: help
 help:
 	@echo "HttY makefile guide (source: Makefile)"
 	@echo "Usage: make [Target]"
 	@echo ""
 	@echo "[Targets]"
-	@echo "dev         run htty local in dev mode (all logs - info, warn, error, debug are shown) with ./config.json"
+	@echo "dev         run htty local in dev mode (all logs - info, warn, error, debug are shown) with $(PWD)/config.json"
 	@echo "debug       run htty local in debug mode"
 	@echo "build       build htty executable"
+	@echo "runbuild    build htty(if not already) + run executable"
 	@echo "test        run test from ./tests folder"
 	@echo "roughtest   run test for only the rough ./tests/rough_test.go"
 	@echo "logwatch    follow $(LOGFILE) for viewing live logs" 
 	@echo "docslive    gopls docs for htty project in live webapp"
+	@echo "stats       stats like bin size, other utilities, ..."

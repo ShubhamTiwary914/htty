@@ -6,20 +6,20 @@ import (
 	global "htty/globals"
 	utils "htty/utils"
 
+	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type TextPane struct {
 	Width, Height int
-	Input textarea.Model
-	CharLimit int
-	PanelID string
-	Placeholder string 
-	Showline bool 
-	Border types.BorderConfig
-	Margin types.MarginConfig
+	Input         textarea.Model
+	CharLimit     int
+	PanelID       string
+	Placeholder   string
+	Showline      bool
+	Border        types.BorderConfig
+	Margin        types.MarginConfig
 }
 
 func (text *TextPane) Init() tea.Cmd {
@@ -27,9 +27,9 @@ func (text *TextPane) Init() tea.Cmd {
 	input.Placeholder = text.Placeholder
 	input.ShowLineNumbers = text.Showline
 	input.SetHeight(text.Height)
-	input.CharLimit = text.CharLimit 
+	input.CharLimit = text.CharLimit
 	input.Prompt = ""
-	text.Input= input	
+	text.Input = input	
 	return nil
 }
 
@@ -39,7 +39,7 @@ func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 	//set a line focus pointer when this panel is focused on
 	if focused {
 		text.Input.Focus()
-		text.Input.Prompt = "│ " 
+		text.Input.Prompt = "│ "
 	} else {
 		text.Input.Blur()
 		text.Input.Prompt = ""
@@ -48,12 +48,13 @@ func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-func (text TextPane) View() string {	
+func (text TextPane) View() string {
 	style := utils.SetBorder(text.Border).BorderForeground(
 		//adds highlight on border when focused on
 		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
 	).Margin(
-		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left)
+		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
+	).Background(lipgloss.Color(global.Config.Common.Background_color)) 
 	return style.Render(text.Input.View())
 }
 

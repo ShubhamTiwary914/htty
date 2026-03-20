@@ -17,8 +17,16 @@ func PrefixClosestSearch(substr string, filePath string) ([]string, error){
 	var err error
 	words, err = ReadTextLines_intoList(filePath)
 	if err != nil { return nil, err; }
+	return PrefixClosestSearch_withOptions(substr, words);
+}
 
-	//first index where prefix matches
+
+/*
+	Prefix completions taking some prefix substring to get closest & shortest results from a source string aray
+	ex: hel --> [hell, hello, Hello...] (NOTE: it is case insensitive)
+*/
+
+func PrefixClosestSearch_withOptions(substr string, words []string) ([]string, error){	//first index where prefix matches
 	prefix := strings.ToLower(substr)
 	start := sort.Search(len(words), func(i int) bool {
 		return strings.ToLower(words[i]) >= prefix
@@ -33,6 +41,7 @@ func PrefixClosestSearch(substr string, filePath string) ([]string, error){
 		end++
 	}
 	return words[start:end], nil
+	
 }
 
 /*	Read from .txt file that have word per line

@@ -6,26 +6,26 @@ import (
 	utils "htty/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	lipgloss "charm.land/lipgloss/v2"
 )
 
 type MainPane struct {
-	width int
-	height int
-	requestPane RequestPane 
+	width        int
+	height       int
+	requestPane  RequestPane
 	responsePane ResponsePane
+	compositor   *lipgloss.Compositor
 }
 
-func (main *MainPane) Init() tea.Cmd {	
-	utils.Infof("main panel initalization")
-	main.requestPane.Init();
+func (main *MainPane) Init() tea.Cmd {
+	utils.Infof("main panel initialization")
+	main.requestPane.Init()
 	main.responsePane.Init()
-	return nil;
+	return nil
 }
 
-func (main *MainPane) Update(msg tea.Msg) (tea.Cmd) {
+func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
-	//auto resize to window dimensions
 	case tea.KeyMsg:
 		//take out inputs from reqPane -> http call -> response to responsePane
 		if msg.String() == global.Config.Key.Sendapicall {
@@ -35,26 +35,28 @@ func (main *MainPane) Update(msg tea.Msg) (tea.Cmd) {
 				output = fmt.Sprintf("status: %d\nerror: %v\nresponse:\n", status, err)
 			} else {
 				output = fmt.Sprintf("status: %d\nerror: nil\nresponse:\n%s", status, string(resp))
-			}; 
+			}
 			main.responsePane.SetResponse(output)
-			utils.Debugf(output)
+			utils.Debugf("%s", output)
 		}
-	}	
+	}
 	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
 }
 
-func (main MainPane) View() string {
-	style := lipgloss.NewStyle().Margin()
-	mainSubPanels := lipgloss.JoinVertical(
-		lipgloss.Left,
-		main.requestPane.View(),
-		main.responsePane.View(),
+
+func (main *MainPane) View() string {
+	reqLayer := utils.CreateNewLayer(&main.requestPane, global.Config.Panels.Main_req)
+	resLayer := utils.CreateNewLayer(&main.responsePane, global.Config.Panels.Main_res,
+		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
 	)
-	return style.Render(mainSubPanels)
+	main.compositor = lipgloss.NewCompositor(reqLayer, resLayer)
+	mainStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return mainStyle.Render(main.compositor.Render())
 }
 
-func (main *MainPane) SetSize(width int, height int) {	
-	main.width = width; main.height = height;
+func (main *MainPane) SetSize(width int, height int) {
+	main.width = width
+	main.height = height
 	main.requestPane.SetSize(
 		utils.GetPercent(global.Config.Panels.Main_req.Width, main.width),
 		utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
