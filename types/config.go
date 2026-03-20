@@ -16,6 +16,7 @@ type HttyCommonConfig struct {
 }
 
 type HttyPanel struct {
+	Title     string
 	ID        int
 	Width     int
 	Height    int
@@ -44,6 +45,7 @@ type HttyKeyConfig struct {
 	Quit        	string
 	Nextpanel   	string
 	Sendapicall 	string
+	Jumpleader      string
 	CompleteText 	string
 	Textoptions_prev string
 	Textoptions_next string

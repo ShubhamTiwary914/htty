@@ -15,6 +15,7 @@ type TextPane struct {
 	Width, Height int
 	Input         textarea.Model
 	CharLimit     int
+	PanelTitle    string
 	PanelID       string
 	Placeholder   string
 	Showline      bool
@@ -49,13 +50,14 @@ func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (text TextPane) View() string {
-	style := utils.SetBorder(text.Border).BorderForeground(
-		//adds highlight on border when focused on
-		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
-	).Margin(
-		text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
-	).Background(lipgloss.Color(global.Config.Common.Background_color)) 
-	return style.Render(text.Input.View())
+	text.Border.Color = utils.GetPanelFocusColor(text.PanelID) 
+	style := utils.SetBorder(text.Border).
+				BorderForeground(lipgloss.Color(text.Border.Color)).
+				Background(lipgloss.Color(global.Config.Common.Background_color)).
+				Margin(0,0,1,0)
+	return utils.SetBorderStyle_WithLabelTop(style, text.Input.View(), text.Border, 
+		utils.GetPanelTitleLabel(text.PanelTitle, global.PANEL_FOCUS_IDS[text.PanelID]),		
+	)
 }
 
 func (text *TextPane) SetSize(width, height int) {

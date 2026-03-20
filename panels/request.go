@@ -53,11 +53,11 @@ func (rq *RequestPane) buildCompositor() {
 
 	// add options overlay if focused
 	if methodOptionsLayer != nil {
-		methodOptionsLayer.X(3).Y(methodHeight+2)
+		methodOptionsLayer.X(3).Y(methodHeight+3)
 		layers = append(layers, methodOptionsLayer)
 	}
 	if urlOptionsLayer != nil {
-		urlOptionsLayer.X(global.Config.Panels.Main_req_url.Margin[0]+11).Y(methodHeight+ 2)
+		urlOptionsLayer.X(global.Config.Panels.Main_req_url.Margin[0]+11).Y(methodHeight+ 3)
 		layers = append(layers, urlOptionsLayer)
 	}	
 	rq.compositor = lipgloss.NewCompositor(layers...)
@@ -94,36 +94,38 @@ func (rq *RequestPane) SetSize(width int, height int) {
 func RequestSubPanels() (components.TextOptions, components.TextOptions, components.TextPane, components.TextPane) {
 	var methodTypeComponent = components.TextOptions{
 		CharLimit:   10,
+		PanelTitle: global.Config.Panels.Main_req_method.Title,
 		PanelID:     global.PANEL_REQ_METHOD_ID,
 		Placeholder: "Method",
 		Showline:    false,
-		Border:      types.BorderConfig{Bottom: true},
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		OptionsFilePath: global.CachePrefix + "/method.txt",
 	}
 	var urlPathComponent = components.TextOptions{
 		CharLimit:   1024,
+		PanelTitle: global.Config.Panels.Main_req_url.Title,
 		PanelID:     global.PANEL_REQ_URL_ID,
 		Placeholder: "http://example/com",
 		Showline:    false,
-		Border:      types.BorderConfig{Bottom: true},
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		OptionsFilePath: global.CachePrefix + "/url.txt",
 		AllowSaveInput: true,
 	}
 	var headersComponent = components.TextPane{
 		CharLimit:   1024,
+		PanelTitle: global.Config.Panels.Main_req_headers.Title,
 		PanelID:     global.PANEL_REQ_HEADERS,
 		Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
 		Showline:    true,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		Margin:      types.MarginConfig{Bottom: 2},
 	}
 	var bodyComponent = components.TextPane{
 		CharLimit:   2048,
+		PanelTitle: global.Config.Panels.Main_req_body.Title,
 		PanelID:     global.PANEL_REQ_BODY,
 		Placeholder: "request body content",
 		Showline:    true,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		Margin:      types.MarginConfig{Left: 0, Bottom: 2, Right: 10},
 	}
 	return methodTypeComponent, urlPathComponent, headersComponent, bodyComponent
 }

@@ -18,7 +18,12 @@ build: htty
 
 .PHONY: runbuild
 runbuild:  build
-	CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" ./htty
+	CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(HOME)/.cache/htty" ./htty
+
+.PHONY: clean
+clean:
+	rm -f ./htty
+	$(MAKE) logflush
 
 
 # logs & debugging --------------
@@ -66,6 +71,7 @@ help:
 	@echo "debug       run htty local in debug mode"
 	@echo "build       build htty executable"
 	@echo "runbuild    build htty(if not already) + run executable"
+	@echo "clean       remove build executable & clean log file($(LOGFILE))"
 	@echo "test        run test from ./tests folder"
 	@echo "roughtest   run test for only the rough ./tests/rough_test.go"
 	@echo "logwatch    follow $(LOGFILE) for viewing live logs" 

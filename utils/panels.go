@@ -1,11 +1,16 @@
 package htty
 
 import (
-	types "htty/types"
+	"fmt"
 	global "htty/globals"
+	types "htty/types"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"strconv"
+	"strings"
+	"regexp"
+
 	"charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 
@@ -30,6 +35,21 @@ func PanelFocusPrev(focusID *int){
 		(*focusID) = global.FOCUSABLE_PANELS-1
 	}
 }
+
+func GetPanelTitleLabel(title string, id int) string {
+	return fmt.Sprintf(" [%d] %s ", id, title)
+}
+
+//given a msg.Sting() from bubble tea.cmd, sees if event is a jump type 
+//jump type means tp jump to a panel with <key>+<number> (ex: alt+2)
+func EventIs_TypeJumpPanel(eventstr string) (bool, int) {
+	re := regexp.MustCompile(`^`+ global.Config.Key.Jumpleader +`\+([0-9])$`)
+	if matches := re.FindStringSubmatch(eventstr); matches != nil {
+		panelNum, _ := strconv.Atoi(matches[1])
+		return true, panelNum
+	}
+	return false, 0
+} 
 
 
 //jump to panel using the panelID(2) or panel mapping string(ex: "PANEL_REQ_METHOD_ID") 
@@ -119,6 +139,80 @@ func SetBorder(cfg types.BorderConfig) lipgloss.Style {
 	return style
 }
 
+
+func SetBorderStyle_WithLabel(style lipgloss.Style, content string, cfg types.BorderConfig, label string, position string) string {
+    if label == "" {
+        return style.Render(content)
+    }
+    
+    isTop := position == "top"
+    isBottom := position == "bottom"
+    
+    if (isTop && !cfg.Top) || (isBottom && !cfg.Bottom) {
+        return style.Render(content)
+    }
+    
+    // render content with all borders EXCEPT the one we're labeling
+    cfgModified := cfg
+    if isTop {
+        cfgModified.Top = false
+    } else {
+        cfgModified.Bottom = false
+    }
+    
+    // get styling from the original style
+    borderFgColor := style.GetBorderTopForeground()
+    contentWithBorders := SetBorder(cfgModified).
+        BorderForeground(borderFgColor).
+        Margin(style.GetMarginTop(), style.GetMarginRight(), style.GetMarginBottom(), style.GetMarginLeft()).
+        Background(style.GetBackground()).
+        Render(content)
+    
+    // manually construct labeled border
+    border := cfg.Border
+    if border == (lipgloss.Border{}) {
+        border = lipgloss.NormalBorder()
+    }
+    color := lipgloss.Color(cfg.Color)
+    
+    var leftCorner, rightCorner, horizontal string
+    if isTop {
+        leftCorner = border.TopLeft
+        rightCorner = border.TopRight
+        horizontal = border.Top
+    } else {
+        leftCorner = border.BottomLeft
+        rightCorner = border.BottomRight
+        horizontal = border.Bottom
+    }
+    
+    // calculate width from the rendered content
+    contentWidth := lipgloss.Width(contentWithBorders)
+    remainingWidth := max(contentWidth - lipgloss.Width(label) - 2, 0)
+    
+    // build the entire line FIRST, then style it all at once
+    borderLine := leftCorner + label + strings.Repeat(horizontal, remainingWidth) + rightCorner
+    labeledBorder := lipgloss.NewStyle().Foreground(color).Render(borderLine)
+    
+    var result string
+    if isTop {
+        result = lipgloss.JoinVertical(lipgloss.Left, labeledBorder, contentWithBorders)
+    } else {
+        result = lipgloss.JoinVertical(lipgloss.Left, contentWithBorders, labeledBorder)
+    }
+    return result
+}
+
+
+func SetBorderStyle_WithLabelTop(style lipgloss.Style, content string, cfg types.BorderConfig, label string) string {
+    return SetBorderStyle_WithLabel(style, content, cfg, label, "top")
+}
+
+func SetBorderStyle_WithLabelBottom(style lipgloss.Style, content string, cfg types.BorderConfig, label string) string {
+    return SetBorderStyle_WithLabel(style, content, cfg, label, "bottom")
+}
+
+
 func SetFullBorder(width, height int, color string) lipgloss.Style {
 	return SetBorder(types.BorderConfig{
 		Width:  width,
@@ -147,7 +241,7 @@ func SetBorderOneSide(width, height int, color string, direction string) lipglos
 	case global.BORDER_RIGHT:
 		cfg.Right = true
 	}
-
+	
 	return SetBorder(cfg)
 }
 

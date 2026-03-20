@@ -41,6 +41,14 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			utils.PanelFocusNext(&global.CurrentPanelID)
 			utils.Debugf("Current Panel: %d", global.CurrentPanelID)
 		}
+		//jump sequence
+		allowJump, targetPanel := utils.EventIs_TypeJumpPanel(msg.String()); if allowJump {
+			if targetPanel < global.FOCUSABLE_PANELS{
+				utils.PanelFocusJump(&global.CurrentPanelID, targetPanel)
+				utils.Debugf("Jumped to Panel: %d", global.CurrentPanelID)
+				return &app, nil
+			}
+		}
 	}
 	//INFO: allows passing tea object for handling events to children panes
 	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane)

@@ -2,12 +2,13 @@
 	"common": {
 		"focus_border_color": "#e55561",
 		"background_color": "#000",
-		"unfocus_border_color": "240",
+		"unfocus_border_color": "#99a2ff",
 		"textoptions_selection_color": "#e55561"
 	},
 	"panels": {
 		"side": {
 			"id": 0,
+			"title": "File Tree",
 			"width": 20,
 			"height": 100,
 			"margin": [0,0],
@@ -28,6 +29,7 @@
 		},
 		"main_req_method": {
 			"id": 1,
+			"title": "Type",
 			"width": 10,
 			"height": 2,
 			"margin": [3,1],
@@ -35,33 +37,36 @@
 		},
 		"main_req_url": {
 			"id": 2,
+			"title": "URL",
 			"width": 75,
 			"height": 2,
-			"margin": [10,1],
+			"margin": [8,1],
 			"layer": 0
 
 		},
 		"main_req_headers": {
 			"id": 3,
+			"title": "Headers",
 			"width": 40,
 			"height": 75,
-			"margin": [3,4],
+			"margin": [1,4],
 			"layer": 0
 		},
 		"main_req_body": {
 			"id": 4,
-			"width": 50,
+			"title": "Body",
+			"width": 45,
 			"height": 75,
-			"margin": [9,4],
+			"margin": [5,4],
 			"layer": 0
 		},
 
-
 		"main_res": {
 			"id": 5,
-			"width": 100,
+			"title": "Response",
+			"width": 90,
 			"height": 40,
-			"margin": [0,0],
+			"margin": [1,1],
 			"layer": 0
 		}
 	},
@@ -74,6 +79,7 @@
 		"quit": "q",
 		"nextpanel": "tab",
 		"sendapicall": "alt+enter",
+		"jumpleader": "alt",
 		"completeText": "enter",
 		"textoptions_prev": "up",
 		"textoptions_next": "down"

@@ -16,6 +16,7 @@ type TextOptions struct {
 	Width, Height int
 	Input         textarea.Model
 	CharLimit     int
+	PanelTitle    string
 	PanelID       string
 	Placeholder   string
 	Showline      bool
@@ -118,7 +119,10 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	).Margin(text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
 	).Background(lipgloss.Color(global.Config.Common.Background_color))
 	
-	baseView = inputStyle.Render(text.Input.View())
+	text.Border.Color = utils.GetPanelFocusColor(text.PanelID)
+	baseView = utils.SetBorderStyle_WithLabelTop(inputStyle, text.Input.View(), text.Border, 
+		utils.GetPanelTitleLabel(text.PanelTitle, global.PANEL_FOCUS_IDS[text.PanelID]),		
+	)
 	// if not requesting layer, return early
 	if !withLayer {
 		return baseView, nil
