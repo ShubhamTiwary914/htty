@@ -6,6 +6,9 @@ on:
       - 'master'
   workflow_dispatch:
 
+permission:
+  contents: write
+
 jobs:
   release-linux-amd64:
     name: Release CI for htty (linux-amd64)
