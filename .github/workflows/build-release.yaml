@@ -6,7 +6,7 @@ on:
       - 'master'
   workflow_dispatch:
 
-permission:
+permissions:
   contents: write
 
 jobs:
