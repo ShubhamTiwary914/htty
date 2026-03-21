@@ -35,11 +35,13 @@ jobs:
       - name: Compress binary with gz
         run: gzip -7 htty-linux-amd64
 
+      - name: Generate changelog from last 15 commits
+        run: git log -n 15 --pretty=format:"- %s (%h)" > CHANGELOG.md
+
       - name: Release on Github(releases)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: htty-release
           name: htty-release 
+          body_path: CHANGELOG.md
           files: htty-linux-amd64.gz
-          draft: false
-          prerelease: false
