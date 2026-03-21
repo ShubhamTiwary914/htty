@@ -1,0 +1,42 @@
+name: Build, Test, Release CI for htty binary (linux-amd64) 
+run-name: htty linux-amd64 release eCI ${{ github.event_name }} by ${{ github.actor }}
+on: 
+  push:
+    branches:
+      - 'master'
+  workflow_dispatch:
+
+jobs:
+  release-linux-amd64:
+    name: Release CI for htty (linux-amd64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+
+      - name: Install dependencies
+        run: |
+          go get .
+    
+      - name: Run Tests
+        run: go test ./tests -v
+
+      - name: Build
+        run: go build -o htty-linux-amd64 . 
+
+      - name: Compress binary with gz
+        run: gzip -7 htty-linux-amd64
+
+      - name: Release on Github(releases)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: htty-release
+          name: htty-release 
+          files: htty-linux-amd64.gz
+          draft: false
+          prerelease: false
