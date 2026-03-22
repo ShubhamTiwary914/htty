@@ -6,6 +6,7 @@ require (
 	charm.land/lipgloss/v2 v2.0.2
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
+	golang.org/x/net v0.52.0
 )
 
 require (
@@ -31,7 +32,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/text v0.35.0 // indirect
 )

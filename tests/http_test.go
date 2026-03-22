@@ -20,12 +20,15 @@ func TestHTTPCall_SimpleGet(tt *testing.T){
 		Path:   "http://example.com",
 		Method: "GET",
 	}
-	_, status, err := http.HTTPCaller(req)
+	_, headers, status, err := http.HTTPCaller(req)
 	if err != nil {
 		tt.Fatalf("unexpected error: %v", err)
 	}
 	if status != 200 {
 		tt.Fatalf("expected status 200, got %d", status)
+	}
+	if headers["Content-Type"] != "text/html" {
+		tt.Fatalf("expected Content-Type: text/html, got: %s", headers["Content-Type"])
 	}
 }
 
@@ -43,7 +46,7 @@ func TestHTTPCaller_PostWithHeadersAndBody(tt *testing.T) {
 		},
 		Body: `{"name":"htty","role":"dev"}`,
 	}
-	body, status, err := http.HTTPCaller(req)
+	body, _, status, err := http.HTTPCaller(req)
 	if err != nil {
 		tt.Fatalf("unexpected error: %v", err)
 	}
