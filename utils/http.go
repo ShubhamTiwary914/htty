@@ -15,7 +15,7 @@ import (
  	
 	Returns: (response body bytes, status code, error if any).
 */
-func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
+func HTTPCaller(httpObj types.HttpType) ([]byte, map[string]string, int, error) {
 	if !AssertHTTPMethodType(httpObj.Method) {
 		Errorf("HTTP method type not valid: %s", httpObj.Method)			
 	}
@@ -29,7 +29,7 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	}
 	request, err := http.NewRequest(httpObj.Method, httpObj.Path, bodyBuffer)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}	
 	for header, val := range httpObj.Headers {
 		request.Header.Set(header, val)
@@ -37,16 +37,18 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, int, error) {
 	//make request
 	resp, err := client.Do(request)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 	defer resp.Body.Close()
+	responseHeaders := getHTTPHeadersMap(resp.Header)
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, resp.StatusCode, err
+		return nil, nil, resp.StatusCode, err
 	}
-	return respBody, resp.StatusCode, nil
+	return respBody, responseHeaders, resp.StatusCode, nil
 }
+
 
 /*
 	Takes headers string of k/v pairs seperated by lines and compose header map(key -> val)
@@ -82,3 +84,14 @@ func AssertHTTPMethodType(method string) bool{
 	}
 	return false;
 }
+
+
+//extract's request/response headers as map(key->val)
+func getHTTPHeadersMap(headers http.Header) map[string]string{
+	respHeaders := make(map[string]string, len(headers))
+	for key, val := range headers {
+		respHeaders[key] = strings.Join(val, ", ")
+	}
+	return respHeaders
+}
+

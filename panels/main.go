@@ -1,7 +1,6 @@
 package htty
 
 import (
-	"fmt"
 	global "htty/globals"
 	utils "htty/utils"
 
@@ -29,13 +28,11 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		//take out inputs from reqPane -> http call -> response to responsePane
 		if msg.String() == global.Config.Key.Sendapicall {
-			resp, status, err := utils.HTTPCaller(main.requestPane.ExportPayload())
-			var output string
-			if err != nil {
-				output = fmt.Sprintf("status: %d\nerror: %v\nresponse:\n", status, err)
-			} else {
-				output = fmt.Sprintf("status: %d\nerror: nil\nresponse:\n%s", status, string(resp))
-			}
+			resp, headers, status, err := utils.HTTPCaller(main.requestPane.ExportPayload())
+			if(err != nil){
+				utils.Errorf("error loading response, error: %v", err)
+			}	
+			var output string = utils.ResponseParser_main(resp, headers, status) 
 			main.responsePane.SetResponse(output)
 			utils.Debugf("%s", output)
 		}
