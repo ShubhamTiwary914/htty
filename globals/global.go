@@ -20,7 +20,8 @@ var TEMP_DIR string
 
 //enum for "focused" panel where cmd actions can act on currently
 var PANEL_FOCUS_IDS = map[string]int{}
-var CurrentPanelID = PANEL_FOCUS_IDS[PANEL_REQ_ID]
+//index to current pane from PANEL_FOCUS_IDS
+var CurrentPanelID int
 var Logger = log.New(os.Stdout, "", 0)
 var Config types.HttyConfig
 
