@@ -3,6 +3,8 @@ package htty
 
 import (
 	"os"
+	"os/exec"
+	"runtime"
 	"bufio"
 	"crypto/rand"
 	"encoding/hex"
@@ -41,4 +43,24 @@ func GenerateRandomUUID(size int) string{
 		uuid = uuid[:size]
 	}
 	return uuid
+}
+
+//pops up dialog to save file(depending on OS may vary)
+func SaveFileDialog(defaultName string) (string, error) {
+	var cmd *exec.Cmd
+	//TODO: adding support for darwin & windows 
+	switch runtime.GOOS {
+	case "linux": 
+		cmd = exec.Command("zenity", "--file-selection", "--save", "--filename="+defaultName, "--confirm-overwrite")
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	// trim whitespace/newlines
+	result := string(output)
+	if len(result) > 0 && result[len(result)-1] == '\n' {
+		result = result[:len(result)-1]
+	}
+	return result, nil
 }

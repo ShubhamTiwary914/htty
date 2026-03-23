@@ -11,7 +11,6 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/sqweek/dialog"
 	"github.com/pkg/browser"
 	"github.com/atotto/clipboard"
 )
@@ -87,12 +86,8 @@ func NewResponseTextComponent() components.TextPane {
 }
 
 func (res *ResponsePane) saveDialog() {
-	filename, err := dialog.File().Title("Save File").
-        Filter("Text files", "txt").
-        Filter("Html files", "html").
-        Filter("All files", "*").
-        Save()
-	//may happen if dialog closed force, its fine, but is still logged
+	filename, err := utils.SaveFileDialog("response.txt") 
+	//may happen if dialog closed force(cancelled), its fine, but is still logged
     if err != nil {
        utils.Errorf("%v", err) 
     }	
