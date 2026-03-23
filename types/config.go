@@ -13,6 +13,7 @@ type HttyCommonConfig struct {
 	Background_color string
 	Unfocus_border_color string
 	Textoptions_selection_color string
+	Statusline_options_color string
 }
 
 type HttyPanel struct {
@@ -22,6 +23,7 @@ type HttyPanel struct {
 	Height    int
 	Margin    [2]int //[x,y] 
 	Layer     int
+	Keys      map[string]string
 }
 
 type HttyPanelsConfig struct {
@@ -33,6 +35,7 @@ type HttyPanelsConfig struct {
 	Main_req_headers HttyPanel
 	Main_req_body   HttyPanel
 	Main_res        HttyPanel
+	Statusline     HttyPanel
 }
 
 type HttyLogConfig struct {

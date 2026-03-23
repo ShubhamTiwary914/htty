@@ -1,24 +1,35 @@
 #INFO: default logfile path, is configurable
 LOGFILE=.logs/htty.log
+CONFIG_FILE="$(PWD)/config.json"
+CACHE_PREFIX="$(PWD)/.cache"
+TMP_DIR="/tmp"
 
 # build & run --------------
 htty:
 	go build -o htty .
 
 .PHONY: dev
-dev:
-	LOGLEVEL=all CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
+dev: 
+	LOGLEVEL=all CONFIG_FILE=$(CONFIG_FILE) \
+		TMP_DIR=$(TMP_DIR) \
+		CACHE_PREFIX=$(CACHE_PREFIX) go run .
 
 .phony: debug 
 debug:
-	LOGLEVEL=debug CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(PWD)/.cache" go run .
+	LOGLEVEL=debug \
+		CONFIG_FILE=$(CONFIG_FILE) \
+		TMP_DIR=$(TMP_DIR) \
+		CACHE_PREFIX=$(CACHE_PREFIX) go run .
 
 .PHONY: build
 build: htty
 
 .PHONY: runbuild
 runbuild:  build
-	CONFIG_FILE="$(PWD)/config.json" CACHE_PREFIX="$(HOME)/.cache/htty" ./htty
+	LOGLEVEL=all \
+	CONFIG_FILE=$(CONFIG_FILE) \
+	TMP_DIR=$(TMP_DIR) \
+	CACHE_PREFIX=$(CACHE_PREFIX) ./htty
 
 .PHONY: clean
 clean:

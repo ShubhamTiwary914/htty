@@ -2,22 +2,23 @@
 	"common": {
 		"focus_border_color": "#e55561",
 		"background_color": "#000",
-		"unfocus_border_color": "#99a2ff",
-		"textoptions_selection_color": "#e55561"
+		"unfocus_border_color": "#dddddd",
+		"textoptions_selection_color": "#e55561",
+		"statusline_options_color": "#e55561"
 	},
 	"panels": {
 		"side": {
 			"id": 0,
 			"title": "File Tree",
 			"width": 20,
-			"height": 100,
+			"height": 99,
 			"margin": [0,0],
 			"layer": 0
 		},
 
 		"main": {
 			"width": 75,
-			"height": 100,
+			"height": 99,
 			"margin": [0,0],
 			"layer": 0
 		},
@@ -42,7 +43,6 @@
 			"height": 2,
 			"margin": [8,1],
 			"layer": 0
-
 		},
 		"main_req_headers": {
 			"id": 3,
@@ -67,7 +67,19 @@
 			"width": 90,
 			"height": 40,
 			"margin": [1,1],
-			"layer": 0
+			"layer": 0,
+			"keys": {
+				"save": "alt+s",
+				"open": "alt+o",
+				"copy": "alt+c",
+				"verbose": "alt+t"
+			}
+		},
+		"statusline": {
+			"width": 100,
+			"height": 1,
+			"margin": [0,0],
+			"layer": 10
 		}
 	},
 	"log": {

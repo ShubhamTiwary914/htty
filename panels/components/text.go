@@ -21,6 +21,7 @@ type TextPane struct {
 	Showline      bool
 	Border        types.BorderConfig
 	Margin        types.MarginConfig
+	StatusOptions []string
 }
 
 func (text *TextPane) Init() tea.Cmd {
@@ -41,6 +42,7 @@ func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
 	if focused {
 		text.Input.Focus()
 		text.Input.Prompt = "│ "
+		utils.SetStatusLineOptions(text.StatusOptions)
 	} else {
 		text.Input.Blur()
 		text.Input.Prompt = ""

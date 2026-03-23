@@ -100,6 +100,7 @@ func RequestSubPanels() (components.TextOptions, components.TextOptions, compone
 		Showline:    false,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		OptionsFilePath: global.CachePrefix + "/method.txt",
+		StatusOptions: []string{},
 	}
 	var urlPathComponent = components.TextOptions{
 		CharLimit:   1024,
@@ -110,6 +111,7 @@ func RequestSubPanels() (components.TextOptions, components.TextOptions, compone
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		OptionsFilePath: global.CachePrefix + "/url.txt",
 		AllowSaveInput: true,
+		StatusOptions: []string{},
 	}
 	var headersComponent = components.TextPane{
 		CharLimit:   1024,
@@ -118,6 +120,7 @@ func RequestSubPanels() (components.TextOptions, components.TextOptions, compone
 		Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
 		Showline:    true,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		StatusOptions: []string{},
 	}
 	var bodyComponent = components.TextPane{
 		CharLimit:   2048,
@@ -126,6 +129,7 @@ func RequestSubPanels() (components.TextOptions, components.TextOptions, compone
 		Placeholder: "request body content",
 		Showline:    true,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		StatusOptions: []string{},
 	}
 	return methodTypeComponent, urlPathComponent, headersComponent, bodyComponent
 }

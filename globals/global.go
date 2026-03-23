@@ -11,14 +11,22 @@ import (
 	"os"
 )
 
+
+//environment vars
+var CachePrefix string
+var LOGLEVEL  = "info"
+var TEMP_DIR string
+
+
 //enum for "focused" panel where cmd actions can act on currently
 var PANEL_FOCUS_IDS = map[string]int{}
-
-var CurrentPanelID = PANEL_FOCUS_IDS[PANEL_REQ_ID]
+//index to current pane from PANEL_FOCUS_IDS
+var CurrentPanelID int
 var Logger = log.New(os.Stdout, "", 0)
 var Config types.HttyConfig
 
-var CachePrefix string
+var StatusLineOptions []string
+
 var AppWidth int
 var AppHeight int
 
@@ -55,9 +63,6 @@ const (
 	LOG_ERROR = "error"
 	LOG_DEBUG = "debug"
 	LOG_ALL   = "all"
-)
-var (
-	LOGLEVEL  = "info"
 )
 
 const (

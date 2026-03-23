@@ -26,6 +26,8 @@ type TextOptions struct {
 	OptionsStore   []string   
 	OptionsFilePath string
 	AllowSaveInput    bool //whether to save inputs for later options once api call made
+	StatusOptions []string
+
 	selectIndex   int
 }
 
@@ -50,6 +52,7 @@ func (text *TextOptions) Update(msg tea.Msg) tea.Cmd {
 	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[text.PanelID]
 	
 	if focused {
+		utils.SetStatusLineOptions(text.StatusOptions)
 		text.Input.Focus()
 		text.Input.Prompt = "│ "
 	} else {

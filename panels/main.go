@@ -32,9 +32,8 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 			if(err != nil){
 				utils.Errorf("error loading response, error: %v", err)
 			}	
-			var output string = utils.ResponseParser_main(resp, headers, status) 
-			main.responsePane.SetResponse(output)
-			utils.Debugf("%s", output)
+			var output string = utils.ResponseParser_main(resp, headers, status, false) 
+			main.responsePane.SetResponse(output, string(resp), headers, status)
 		}
 	}
 	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
