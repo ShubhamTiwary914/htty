@@ -4,13 +4,16 @@ go 1.25.6
 
 require (
 	charm.land/lipgloss/v2 v2.0.2
+	github.com/atotto/clipboard v0.1.4
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
+	github.com/sqweek/dialog v0.0.0-20260123140253-64c163d53aac
 	golang.org/x/net v0.52.0
 )
 
 require (
-	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/lipgloss v1.1.0 // indirect

@@ -13,11 +13,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-
-func GetPercent(percentage int, source int) int{
-	return (percentage * source)/100
-}
-
 //move focus of cursor onto next item in panels list 
 //(present at types/panels -> PANEL_FOCUS_IDS)
 func PanelFocusNext(focusID *int){
@@ -40,6 +35,30 @@ func GetPanelTitleLabel(title string, id int) string {
 	return fmt.Sprintf(" [%d] %s ", id, title)
 }
 
+func SetStatusLineOptions(options []string){
+	global.StatusLineOptions = options
+}
+
+
+//for a panel, what are the action keys , like alt+s, alt+c allowed as per its "Keys"
+func GetPanelActionKeys(panelCfg types.HttyPanel) []string{
+	var keys []string;
+	for _, key := range panelCfg.Keys {
+		keys = append(keys, key)
+	}
+	return keys 
+}
+
+
+//from panel's key (actions that appear on status line), generates string arr of options to show in statusline
+func GetPanel_KeyOptions(panelcfg types.HttyPanel) []string{
+	var options []string
+	for action, key := range panelcfg.Keys {
+		options = append(options, fmt.Sprintf("%s(%s)", action, key))
+	}
+	return options
+}
+
 //given a msg.Sting() from bubble tea.cmd, sees if event is a jump type 
 //jump type means tp jump to a panel with <key>+<number> (ex: alt+2)
 func EventIs_TypeJumpPanel(eventstr string) (bool, int) {
@@ -50,7 +69,6 @@ func EventIs_TypeJumpPanel(eventstr string) (bool, int) {
 	}
 	return false, 0
 } 
-
 
 //jump to panel using the panelID(2) or panel mapping string(ex: "PANEL_REQ_METHOD_ID") 
 //(present at types/panels -> PANEL_FOCUS_IDS)

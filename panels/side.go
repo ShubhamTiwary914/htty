@@ -16,6 +16,10 @@ func (side SidePane) Init() tea.Cmd {
 }
 
 func (side *SidePane) Update(msg tea.Msg) tea.Cmd {
+	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]
+	if focused {
+		utils.SetStatusLineOptions([]string{})
+	}
 	return nil
 }
 

@@ -15,19 +15,16 @@ import (
 )
 
 
-func ResponseParser_main(body []byte, headers map[string]string, status int) string{
-	contentTypeFull := headers["Content-Type"]
-	//if empty -> default plain text 
-	if contentTypeFull == "" {
-		return defaultFormatter(body, headers, status)
+func ResponseParser_main(body []byte, headers map[string]string, status int, isVerbose bool) string{
+	contentType := GetResponse_ContentMimeType(headers["Content-Type"])
+	if contentType == ""  {
+		return defaultFormatter(body, headers, status, isVerbose)
 	}
-	// extract just the MIME type 
-	contentType := strings.TrimSpace(strings.Split(contentTypeFull, ";")[0])	
-	Debugf("Content-Type: %s", contentType)
 	var output strings.Builder
-	//TODO: verbose toggle condition to limit whether to show header/what headers to show, ...
-	headersFmt := formatHeaders_verbose(headers, status)
-	fmt.Fprintf(&output, "%s\n", headersFmt)
+	if isVerbose {
+		headersFmt := formatHeaders_verbose(headers, status)
+		fmt.Fprintf(&output, "%s\n", headersFmt)
+	}
 	var bodyFmt string
 	switch(contentType){
 		case "text/plain":
@@ -37,18 +34,36 @@ func ResponseParser_main(body []byte, headers map[string]string, status int) str
 		case "application/json":	
 			bodyFmt = formatBody_json(body)
 		default:
-			return defaultFormatter(body, headers, status)
+			return defaultFormatter(body, headers, status, isVerbose)
 	}
-	fmt.Fprintf(&output, "Body:\n%s", bodyFmt)
+	fmt.Fprintf(&output, "\n%s", bodyFmt)
 	return output.String()
+}
+
+//for a response's Content-Type, what will be its file extension
+//(example -> json for application/json, html for )
+func GetResponseContent_FileExtension(respContentType string) string{
+	respContentMimeType := GetResponse_ContentMimeType(respContentType)
+	switch(respContentMimeType){
+		case "text/plain":
+			return "txt"
+		case "text/html":
+			return "html"
+		case "application/json":	
+			return "json"
+		default:
+			return "txt"
+	}
 }
 
 /// ---------------------------------------
 //Formatters ------------------------
-func defaultFormatter(body []byte, headers map[string]string, status int) string{
+func defaultFormatter(body []byte, headers map[string]string, status int, isVerbose bool) string{
 	var output strings.Builder
-	fmt.Fprintf(&output, "%s", formatHeaders_verbose(headers, status))
-	fmt.Fprintf(&output, "\nBody:\n%s", string(body))
+	if isVerbose {
+		fmt.Fprintf(&output, "%s", formatHeaders_verbose(headers, status))
+	}
+	fmt.Fprintf(&output, "\n%s", string(body))
 	return output.String()
 }
 
@@ -118,4 +133,13 @@ func formatBody_html(body []byte) string {
 	
 	render(doc, 0)
 	return buf.String()
+}
+
+//--------------------------------
+//Other utilities
+
+// extract just the MIME type for response's Content-Type 
+func GetResponse_ContentMimeType(respContentTypeHeader string) string{
+	contentType := strings.TrimSpace(strings.Split(respContentTypeHeader, ";")[0])
+	return contentType
 }
