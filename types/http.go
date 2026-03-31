@@ -1,4 +1,4 @@
-package htty
+package types 
 
 type HttpType struct {
 	Path string

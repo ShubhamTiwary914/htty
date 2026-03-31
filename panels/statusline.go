@@ -1,4 +1,4 @@
-package htty
+package panels 
 
 import (
 	global "htty/globals"

@@ -3,7 +3,7 @@ Takes HTTP response's "Content-Type" header to format response as html, text, js
 
 (ref for Content-Type in HTTP - https://httpwg.org/specs/rfc9110.html#field.content-type)
 */
-package htty
+package utils 
 
 import (
 	"bytes"

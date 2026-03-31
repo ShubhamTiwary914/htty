@@ -3,7 +3,7 @@
 	NOTE: this is to be used as least as possible, for any constant, save under types/ (makes test/mocks much easier to replicate)
 */
 
-package htty
+package globals 
 
 import (
 	types "htty/types"

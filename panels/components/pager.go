@@ -1,4 +1,4 @@
-package htty
+package components 
 
 import (
 	types "htty/types"

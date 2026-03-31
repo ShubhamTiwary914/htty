@@ -1,5 +1,5 @@
 //pure utility methods like calculations, rounding, array/object operations, etc..
-package htty
+package utils 
 
 import (
 	"os"

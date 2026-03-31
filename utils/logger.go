@@ -1,4 +1,4 @@
-package htty 
+package utils 
 
 import (
 	"fmt"

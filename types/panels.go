@@ -1,4 +1,4 @@
-package htty
+package types 
 
 import (
 	"github.com/charmbracelet/bubbletea"
