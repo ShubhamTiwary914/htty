@@ -1,9 +1,8 @@
 package htty
 
 import (
-	types "htty/types"
-
 	global "htty/globals"
+	types "htty/types"
 	utils "htty/utils"
 
 	lipgloss "charm.land/lipgloss/v2"

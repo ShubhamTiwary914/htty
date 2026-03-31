@@ -40,7 +40,11 @@ clean:
 # logs & debugging --------------
 .PHONY: logwatch
 logwatch:
-	tail -f $(LOGFILE)
+	if [[ -z "$$(command -v lnav)" ]]; then \
+		tail -f "$(LOGFILE)"
+	else
+		lnav "$(LOGFILE)"	
+	fi
 
 .PHONY: logflush
 logflush: 
@@ -50,7 +54,6 @@ logflush:
 logwatch_new:
 	$(MAKE) logflush 
 	$(MAKE) logwatch
-
 
 # tests & docs --------------
 .PHONY: test

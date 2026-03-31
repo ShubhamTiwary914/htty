@@ -10,18 +10,19 @@ import (
 	global "htty/globals"
 	"os"
 
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
-	"github.com/atotto/clipboard"
 )
 
 type ResponsePane struct {
-	textpane components.TextPane
+	textpane components.PagerPane
 	//objects gets filled after API call from main -> response
 	bodyRaw string
 	headersRaw map[string]string
 	status int
 
+	loading bool
 	verboseAllow bool
 }
 
@@ -69,16 +70,13 @@ func (res *ResponsePane) SetResponse(formattedResp string, rawBody string, heade
 	res.bodyRaw = rawBody
 	res.headersRaw = headers
 	res.status = status
-	res.textpane.Input.SetValue(formattedResp)
+	res.textpane.SetContent(formattedResp)
 }
 
-func NewResponseTextComponent() components.TextPane {
-	var responseTextComponent = components.TextPane{
-		CharLimit:   2147483647,
+func NewResponseTextComponent() components.PagerPane {
+	var responseTextComponent = components.PagerPane {
 		PanelTitle: global.Config.Panels.Main_res.Title,
 		PanelID:     global.PANEL_RES,
-		Placeholder: "response will appear here... (API call with ctrl+enter)",
-		Showline:    false,
 		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
 		StatusOptions: utils.GetPanel_KeyOptions(global.Config.Panels.Main_res),
 	}
@@ -91,7 +89,7 @@ func (res *ResponsePane) saveDialog() {
     if err != nil {
        utils.Errorf("%v", err) 
     }	
-	os.WriteFile(filename, []byte(res.textpane.Input.Value()), 0644)
+	os.WriteFile(filename, []byte(res.textpane.Content), 0644)
 }
 
 //saves body content to temp dir's random file and opens that file in browser/editor/etc...
@@ -99,7 +97,7 @@ func (res *ResponsePane) openView() {
 	fileType := utils.GetResponseContent_FileExtension(res.headersRaw["Content-Type"])
 	randomFileNameUUID := utils.GenerateRandomUUID(16)
 	filePath := fmt.Sprintf("%s/%s.%s", global.TEMP_DIR, randomFileNameUUID, fileType)
-	content := res.textpane.Input.Value() 
+	content := res.textpane.Content 
 	err := utils.WriteFileContents(filePath, content)
 	if err != nil {
 		panic(err)
@@ -108,7 +106,7 @@ func (res *ResponsePane) openView() {
 }
 
 func (res *ResponsePane) copyClipboard() {
-	clipboard.WriteAll(res.textpane.Input.Value())	
+	clipboard.WriteAll(res.textpane.Content)	
 }
 
 func (res *ResponsePane) verboseToggle(){
