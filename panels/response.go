@@ -1,18 +1,20 @@
 package htty
 
 import (
+	"strings"
 	"fmt"
 	components "htty/panels/components"
 	types "htty/types"
 	utils "htty/utils"
 	"slices"
+	"time"
 
 	global "htty/globals"
 	"os"
 
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
-	"github.com/atotto/clipboard"
 )
 
 type ResponsePane struct {
@@ -22,6 +24,7 @@ type ResponsePane struct {
 	headersRaw map[string]string
 	status int
 
+	loading bool
 	verboseAllow bool
 }
 
@@ -116,4 +119,20 @@ func (res *ResponsePane) verboseToggle(){
 	var newOutput string = utils.ResponseParser_main([]byte(res.bodyRaw), res.headersRaw, 
 								res.status, res.verboseAllow) 
 	res.SetResponse(newOutput, string(res.bodyRaw), res.headersRaw, res.status)
+}
+
+func (res *ResponsePane) HandleLoadTimer(){
+	loadTimer := time.NewTicker(1 * time.Second) 
+	var dots strings.Builder
+	go func () {
+		for range loadTimer.C {
+			if !res.loading {
+				loadTimer.Stop()
+				return;
+			} 
+			utils.Debugf("Timer ticked!!")
+			dots .WriteString(".")
+			res.SetResponse("Loading" + dots.String(), "", nil, 0)
+		}
+	}()
 }
