@@ -1,6 +1,9 @@
 # HttY
 Simple, lightweight Terminal UI for making HTTP API calls
 
+> [!NOTE]
+> still in early development and will break a lot of stuff, once a proper v1 will be out it will be usable
+
 ---
 
 ## Table of Contents
