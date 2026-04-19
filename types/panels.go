@@ -30,3 +30,12 @@ type MarginConfig struct {
 	Left   int  
 	Right  int 
 }
+
+
+//dimensions for a panel
+type PaneGeometry struct {
+	X int
+	Y int 
+	Width int
+	Height int
+}

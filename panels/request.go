@@ -11,7 +11,6 @@ import (
 )
 
 type RequestPane struct {
-	width, height int
 	focusIndex    int
 	initialized   bool
 	method        components.TextOptions
@@ -19,16 +18,15 @@ type RequestPane struct {
 	headers       components.TextPane
 	body          components.TextPane
 	compositor    *lipgloss.Compositor
+
+	Dimensions types.PaneGeometry 
+	PaneConfig types.HttyPanel 
 }
 
 func (rq *RequestPane) Init() tea.Cmd {
 	utils.Infof("request panel initialization")
-	rq.method, rq.url, rq.headers, rq.body = RequestSubPanels()
-	rq.method.Init()
-	rq.url.Init()
-	rq.headers.Init()
-	rq.body.Init()
-	rq.StateHandler()
+	rq.PaneConfig = global.Config.Panels.Main_req
+	rq.InitSubPanels()	
 	return nil
 }
 
@@ -36,11 +34,66 @@ func (rq *RequestPane) Update(msg tea.Msg) tea.Cmd {
 	return utils.UpdatePanels(msg, &rq.method, &rq.url, &rq.headers, &rq.body)
 }
 
+
+func (rq *RequestPane) View() string {
+	rq.buildCompositor()
+	reqStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return reqStyle.Render(rq.compositor.Render())
+}
+
+func (rq *RequestPane) SetSize() {
+	rq.method.Dimensions = utils.GetPaneGeometry(rq.method.PaneCfg, rq.Dimensions)
+	rq.url.Dimensions = utils.GetPaneGeometry(rq.url.PaneCfg, rq.Dimensions)
+	rq.headers.Dimensions = utils.GetPaneGeometry(rq.headers.PaneCfg, rq.Dimensions)
+	rq.body.Dimensions = utils.GetPaneGeometry(rq.body.PaneCfg, rq.Dimensions)
+
+	rq.method.SetSize()
+	rq.url.SetSize()
+	rq.headers.SetSize()
+	rq.body.SetSize()
+}
+
+//config for all the subpanels for Request
+func (rq *RequestPane) InitSubPanels() {
+	rq.method = components.TextOptions{
+		PanelTitle: rq.method.PaneCfg.Title,
+		PanelID:     global.PANEL_REQ_METHOD_ID,
+		Placeholder: "Method",
+		OptionsFilePath: global.CachePrefix + "/method.txt",
+		PaneCfg: global.Config.Panels.Main_req_method,
+	}
+	rq.url = components.TextOptions{
+		PanelTitle: rq.url.PaneCfg.Title,
+		PanelID:     global.PANEL_REQ_URL_ID,
+		Placeholder: "http://example/com",
+		OptionsFilePath: global.CachePrefix + "/url.txt",
+		AllowSaveInput: true,
+		PaneCfg: global.Config.Panels.Main_req_url,
+	}
+	rq.headers = components.TextPane{
+		PanelTitle: rq.headers.PaneCfg.Title,
+		PanelID:     global.PANEL_REQ_HEADERS,
+		Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
+		PaneCfg: global.Config.Panels.Main_req_headers,
+	}
+	rq.body = components.TextPane{
+		PanelTitle: rq.body.PaneCfg.Title,
+		PanelID:     global.PANEL_REQ_BODY,
+		Placeholder: "request body content",
+		PaneCfg: global.Config.Panels.Main_req_body,
+	}
+	rq.method.Init()
+	rq.url.Init()
+	rq.headers.Init()
+	rq.body.Init()
+}
+
+
 func (rq *RequestPane) buildCompositor() {
 	//request panels offset
-	methodWidth := utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.width)
-	methodHeight := utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.height)
-	headersWidth := utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.width)
+	methodWidth := utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.Dimensions.Width)
+	methodHeight := utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.Dimensions.Height)
+	headersWidth := utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.Dimensions.Width)
 
 	//collect all layers
 	methodLayer := utils.CreateNewLayer(&rq.method, global.Config.Panels.Main_req_method)
@@ -64,76 +117,8 @@ func (rq *RequestPane) buildCompositor() {
 	rq.compositor = lipgloss.NewCompositor(layers...)
 }
 
-func (rq *RequestPane) View() string {
-	rq.buildCompositor()
-	reqStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
-	return reqStyle.Render(rq.compositor.Render())
-}
 
-func (rq *RequestPane) SetSize(width int, height int) {
-	rq.width = width
-	rq.height = height
-	rq.method.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.width),
-		utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.height),
-	)
-	rq.url.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_req_url.Width, rq.width),
-		utils.GetPercent(global.Config.Panels.Main_req_url.Height, rq.height),
-	)
-	rq.headers.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.width),
-		utils.GetPercent(global.Config.Panels.Main_req_headers.Height, rq.height),
-	)
-	rq.body.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_req_body.Width, rq.width),
-		utils.GetPercent(global.Config.Panels.Main_req_body.Height, rq.height),
-	)
-}
 
-//config for all the subpanels for Request
-func RequestSubPanels() (components.TextOptions, components.TextOptions, components.TextPane, components.TextPane) {
-	var methodTypeComponent = components.TextOptions{
-		CharLimit:   10,
-		PanelTitle: global.Config.Panels.Main_req_method.Title,
-		PanelID:     global.PANEL_REQ_METHOD_ID,
-		Placeholder: "Method",
-		Showline:    false,
-		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		OptionsFilePath: global.CachePrefix + "/method.txt",
-		StatusOptions: []string{},
-	}
-	var urlPathComponent = components.TextOptions{
-		CharLimit:   1024,
-		PanelTitle: global.Config.Panels.Main_req_url.Title,
-		PanelID:     global.PANEL_REQ_URL_ID,
-		Placeholder: "http://example/com",
-		Showline:    false,
-		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		OptionsFilePath: global.CachePrefix + "/url.txt",
-		AllowSaveInput: true,
-		StatusOptions: []string{},
-	}
-	var headersComponent = components.TextPane{
-		CharLimit:   1024,
-		PanelTitle: global.Config.Panels.Main_req_headers.Title,
-		PanelID:     global.PANEL_REQ_HEADERS,
-		Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
-		Showline:    true,
-		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		StatusOptions: []string{},
-	}
-	var bodyComponent = components.TextPane{
-		CharLimit:   2048,
-		PanelTitle: global.Config.Panels.Main_req_body.Title,
-		PanelID:     global.PANEL_REQ_BODY,
-		Placeholder: "request body content",
-		Showline:    true,
-		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
-		StatusOptions: []string{},
-	}
-	return methodTypeComponent, urlPathComponent, headersComponent, bodyComponent
-}
 
 //take current snapshot of inputs: method,url,headers,body & compose a HttpType object
 func (rq *RequestPane) ExportPayload() types.HttpType {
@@ -152,7 +137,3 @@ func (rq *RequestPane) ExportPayload() types.HttpType {
 	}
 }
 
-// handler for when sidepanel tree triggers load/unload 
-func (rq *RequestPane) StateHandler(){	
-	
-}

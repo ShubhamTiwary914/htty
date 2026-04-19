@@ -3,6 +3,7 @@ package main
 import (
 	global "htty/globals"
 	panels "htty/panels"
+	"htty/types"
 	utils "htty/utils"
 
 	"charm.land/lipgloss/v2"
@@ -14,20 +15,21 @@ type App struct {
 	mainPane   			panels.MainPane
 	statusLinePane 		panels.StatusLinePane
 	compositor 			*lipgloss.Compositor
+
+	Dimensions          types.PaneGeometry
 }
 
 func (app *App) Init() tea.Cmd {
 	utils.Infof("app panel initialization called")
-	app.mainPane.Init()
-	filetree := app.sidePane.Init()
-	app.statusLinePane.Init()
-	app.SetSize()
-	app.View()
-	return filetree 
+	mainTea := app.mainPane.Init()
+	sideTea := app.sidePane.Init()
+	statusTea := app.statusLinePane.Init()
+	return tea.Batch(mainTea, sideTea, statusTea)
 }
 
 func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	
 	//auto resize to window dimensions
 	case tea.WindowSizeMsg:
 		global.AppWidth = msg.Width
@@ -50,7 +52,7 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	//INFO: allows passing tea object for handling events to children panes
+	//allows passing tea object for handling events to children panes
 	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane)
 }
 
@@ -69,13 +71,11 @@ func (app App) View() string {
 	return appStyle.Render(app.compositor.Render())
 }
 
+
 func (app *App) SetSize() {
-	app.sidePane.SetSize(
-		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
-		utils.GetPercent(global.Config.Panels.Side.Height, global.AppHeight),
-	)
-	app.mainPane.SetSize(
-		utils.GetPercent(global.Config.Panels.Main.Width, global.AppWidth),
-		utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight),
-	)
+	app.Dimensions = types.PaneGeometry{Width: global.AppWidth, Height: global.AppHeight}
+	app.sidePane.Dimensions = utils.GetPaneGeometry(app.sidePane.PaneConfig, app.Dimensions);
+	app.mainPane.Dimensions = utils.GetPaneGeometry(app.mainPane.PaneConfig, app.Dimensions);
+	app.mainPane.SetSize()
+	app.sidePane.SetSize()
 }

@@ -1,0 +1,2434 @@
+FILE: config.go -----------------------
+package types 
+
+
+type HttyConfig struct {
+	Common HttyCommonConfig
+	Panels HttyPanelsConfig
+	Log    HttyLogConfig
+	Key    HttyKeyConfig
+}
+
+type HttyCommonConfig struct {
+	Focus_border_color string
+	Background_color string
+	Unfocus_border_color string
+	Textoptions_selection_color string
+	Statusline_options_color string
+}
+
+type HttyPanel struct {
+	Title     string
+	ID        int
+	Width     int
+	Height    int
+	Margin    [2]int //[x,y] 
+	Layer     int
+	Keys      map[string]string
+}
+
+type HttyPanelsConfig struct {
+	Main           HttyPanel
+	Side           HttyPanel
+	Main_req       HttyPanel
+	Main_req_method HttyPanel
+	Main_req_url    HttyPanel
+	Main_req_headers HttyPanel
+	Main_req_body   HttyPanel
+	Main_res        HttyPanel
+	Statusline     HttyPanel
+}
+
+type HttyLogConfig struct {
+	Allow bool
+	File  string
+	Level string
+}
+
+type HttyKeyConfig struct {
+	Quit        	string
+	Nextpanel   	string
+	Sendapicall 	string
+	Jumpleader      string
+	CompleteText 	string
+	Textoptions_prev string
+	Textoptions_next string
+}
+ --------------------------------- 
+FILE: http.go -----------------------
+package types 
+
+type HttpType struct {
+	Path string
+ 	Method string 	
+	Headers map[string]string
+	Body string
+}
+ --------------------------------- 
+FILE: state.go -----------------------
+package types 
+
+type HttpRespState struct {
+    Output  string
+    Raw     string
+    Headers map[string]string
+    Status  int
+}
+
+type HttyState struct {
+	Method 		string	
+	URL 	 	string
+	ReqHeaders 	map[string]string
+	ReqBody     	string
+	Response 	HttpRespState
+}
+
+ --------------------------------- 
+FILE: panels.go -----------------------
+package types 
+
+import (
+	"github.com/charmbracelet/bubbletea"
+	"charm.land/lipgloss/v2"
+)
+
+//mother of panel i.e: the interface that every panel type should follow
+type BasePanel interface {
+	Init() tea.Cmd
+	Update(tea.Msg) tea.Cmd
+	View() string
+}
+
+type BorderConfig struct {
+	Enabled bool
+	Width int
+	Height int
+	Border  lipgloss.Border // if zero, use NormalBorder
+	Color  string
+	Top    bool
+	Bottom bool
+	Left   bool
+	Right  bool
+}
+
+type MarginConfig struct {
+	Top    int
+	Bottom int 
+	Left   int  
+	Right  int 
+}
+ --------------------------------- 
+FILE: main.go -----------------------
+package main
+
+import (
+	global "htty/globals"
+	utils "htty/utils"
+	"os"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+func main(){
+	app := __init()
+	proc := tea.NewProgram(&app, tea.WithAltScreen())
+	if _, err := proc.Run(); err != nil {
+        utils.Errorf("Alas, there's been an error: %v", err)
+        os.Exit(1)
+    }
+}
+
+func __init() App {
+	//load config
+	var err error
+	global.Config , err = utils.GetConfig() 
+	if err != nil {
+		utils.Errorf("%v", err)
+		panic(err)			
+	}
+	//overwrite = true: flushes logfile each run
+	global.LOGLEVEL = os.Getenv("LOGLEVEL")
+	utils.RedirectLogs_toFile(global.Config.Log.File, true)
+	utils.Infof("htty application initializing")
+	//envs set
+	global.CachePrefix = os.Getenv("CACHE_PREFIX")
+	global.PANEL_FOCUS_IDS, err = utils.GetPanelIDsMap(global.Config)
+	global.CurrentPanelID = global.PANEL_FOCUS_IDS[global.PANEL_REQ_METHOD_ID]
+	if err != nil {
+		panic(err)			
+	}
+	global.TEMP_DIR = os.Getenv("TMP_DIR")
+	utils.Infof("Env Keys: loglevel(%s), cache_prefix(%s), temp_dir(%s)", global.LOGLEVEL, 
+		global.CachePrefix, global.TEMP_DIR, 
+	)
+	//create tea program object
+	app := App{}
+	return app
+}
+ --------------------------------- 
+FILE: app.go -----------------------
+package main
+
+import (
+	global "htty/globals"
+	panels "htty/panels"
+	utils "htty/utils"
+
+	"charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type App struct {
+	sidePane   			panels.SidePane
+	mainPane   			panels.MainPane
+	statusLinePane 		panels.StatusLinePane
+	compositor 			*lipgloss.Compositor
+}
+
+func (app *App) Init() tea.Cmd {
+	utils.Infof("app panel initialization called")
+	app.mainPane.Init()
+	filetree := app.sidePane.Init()
+	app.statusLinePane.Init()
+	app.SetSize()
+	app.View()
+	return filetree 
+}
+
+func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	//auto resize to window dimensions
+	case tea.WindowSizeMsg:
+		global.AppWidth = msg.Width
+		global.AppHeight = msg.Height
+		app.SetSize()
+		app.View() 
+	case tea.KeyMsg:
+		if msg.String() == global.Config.Key.Quit {
+			utils.Infof("exiting the htty program...")
+			return &app, tea.Quit
+		}
+		if msg.String() == global.Config.Key.Nextpanel {
+			utils.PanelFocusNext(&global.CurrentPanelID)
+		}
+		//jump sequence
+		allowJump, targetPanel := utils.EventIs_TypeJumpPanel(msg.String()); if allowJump {
+			if targetPanel < global.FOCUSABLE_PANELS{
+				utils.PanelFocusJump(&global.CurrentPanelID, targetPanel)
+				return &app, nil
+			}
+		}
+	}
+	//INFO: allows passing tea object for handling events to children panes
+	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane)
+}
+
+
+func (app App) View() string {
+	//set the side and main layers 
+	sideLayer := utils.CreateNewLayer(&app.sidePane, global.Config.Panels.Side)
+	mainLayer := utils.CreateNewLayer(&app.mainPane, global.Config.Panels.Main, 
+		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
+	)	
+	statusLineLayer := utils.CreateNewLayer(&app.statusLinePane, global.Config.Panels.Statusline,
+		0, utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight),
+	)
+	app.compositor = lipgloss.NewCompositor(sideLayer, mainLayer, statusLineLayer)
+	appStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return appStyle.Render(app.compositor.Render())
+}
+
+func (app *App) SetSize() {
+	app.sidePane.SetSize(
+		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
+		utils.GetPercent(global.Config.Panels.Side.Height, global.AppHeight),
+	)
+	app.mainPane.SetSize(
+		utils.GetPercent(global.Config.Panels.Main.Width, global.AppWidth),
+		utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight),
+	)
+}
+ --------------------------------- 
+FILE: global.go -----------------------
+/*
+	Variables that are to be persisted across files, that are very much needed in almost every single function
+	NOTE: this is to be used as least as possible, for any constant, save under types/ (makes test/mocks much easier to replicate)
+*/
+
+package globals 
+
+import (
+	types "htty/types"
+	"log"
+	"os"
+)
+
+
+//environment vars
+var CachePrefix string
+var LOGLEVEL  = "info"
+var TEMP_DIR string
+
+
+//enum for "focused" panel where cmd actions can act on currently
+var PANEL_FOCUS_IDS = map[string]int{}
+//index to current pane from PANEL_FOCUS_IDS
+var CurrentPanelID int
+var Logger = log.New(os.Stdout, "", 0)
+var Config types.HttyConfig
+
+var StatusLineOptions []string
+
+var AppWidth int
+var AppHeight int
+
+var HTTP_METHOD = map[string]int{
+	"GET": 1,
+	"HEAD": 2,
+	"POST": 3,
+	"PUT": 4,
+	"PATCH": 5,
+	"DELETE": 6,
+	"CONNECT": 7,
+	"OPTIONS": 8,
+	"TRACE": 9,
+}
+
+var AppState types.HttyState
+
+const (
+	PANEL_SIDE_ID string = "side"
+	PANEL_REQ_ID string = "main_req"
+	PANEL_REQ_METHOD_ID string = "main_req_method"
+	PANEL_REQ_URL_ID string = "main_req_url"
+	PANEL_REQ_HEADERS string = "main_req_headers"
+	PANEL_REQ_BODY string = "main_req_body"
+	PANEL_RES string = "main_res"
+)
+
+const (
+	REQUEST_TIMEOUT int = 10
+	FOCUSABLE_PANELS int  = 6
+)
+
+const (
+	LOG_INFO  = "info"
+	LOG_WARN  = "warn"
+	LOG_ERROR = "error"
+	LOG_DEBUG = "debug"
+	LOG_ALL   = "all"
+)
+
+const (
+	BORDER_UP    = "BORDER_UP"
+	BORDER_DOWN  = "BORDER_DOWN"
+	BORDER_LEFT  = "BORDER_LEFT"
+	BORDER_RIGHT = "BORDER_RIGHT"
+)
+
+const STATE_FILETYPE = "htstate"
+ --------------------------------- 
+FILE: signal.go -----------------------
+package globals 
+
+/*
+	event/signalling system similar to godot game engine 
+	(ex - https://docs.godotengine.org/en/stable/getting_started/step_by_step/signals.html)
+
+	for events across panels, register channels here and listeners for panels to emit/listen to these channels
+	examples:
+		- side panel load/unloading states of panel I/O
+*/
+
+import "sync"
+
+type EventBus struct {
+	Locker        sync.RWMutex
+	Listeners map[string][]chan any
+}
+
+//register a channel to receive data when events come in from publishers onto this event
+func (bus *EventBus) Subscribe(event string, channel chan any) {
+	bus.Locker.Lock()
+	defer bus.Locker.Unlock()
+	bus.Listeners[event] = append(bus.Listeners[event], channel)
+}
+
+//when publish to this event, all subscribers of this event get the data
+func (bus *EventBus) Publish(event string, data any){
+	bus.Locker.Lock()
+	listeners := bus.Listeners[event]
+	bus.Locker.RUnlock()
+
+	//pass data onto the subscribers' registered channels
+	for _, channel := range listeners {
+		select {
+			case channel <- data:
+			default: //for registered subs, not ready channels tho
+		}
+	}
+}
+
+//region: event-buses objects
+//INFO: registered buses (while single bus can be used for many event, better to seperate em')
+//so these event-buses are simply grouping of similar events 
+
+//for filetree load/unloads events 
+var StateBus = &EventBus{ Listeners: make(map[string][]chan any) }
+const (
+	EVENT_STATE_LOAD string = "state.load"
+	EVENT_STATE_UNLOAD string = "state.unload"
+)
+ --------------------------------- 
+FILE: config.go -----------------------
+/*
+dealing with config management stuff for loading config
+*/
+package utils 
+
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
+	types "htty/types"
+)
+
+func GetConfigFile() ([]byte, error) {
+	//if path is set -> make sure its absolute
+	configpath := os.Getenv("CONFIG_FILE")
+	if configpath != "" {
+		if !filepath.IsAbs(configpath) {
+			return nil, errors.New("CONFIG_FILE must be an absolute path")
+		}
+		return os.ReadFile(configpath)
+	}
+	cfgHome := os.Getenv("XDG_CONFIG_HOME")
+	//if path not set, go to default path: 
+	if cfgHome == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		cfgHome = filepath.Join(home, ".config")
+	}
+	configpath = filepath.Join(cfgHome, "htty", "config.json")
+	return os.ReadFile(configpath)
+}
+
+func GetConfig() (types.HttyConfig, error) {
+	contentFile, err := GetConfigFile()	
+	if err != nil {
+		return types.HttyConfig{}, err
+	}
+	var configJson types.HttyConfig
+	err = json.Unmarshal(contentFile, &configJson);
+	if err != nil {
+		return types.HttyConfig{}, err
+	}
+   	return configJson, nil 
+}
+
+func GetPanelIDsMap(cfg types.HttyConfig) (map[string]int, error) {
+	panelIDs := map[string]int{
+		"main":             cfg.Panels.Main.ID,
+		"side":             cfg.Panels.Side.ID,
+		"main_req":         cfg.Panels.Main_req.ID,
+		"main_req_method":  cfg.Panels.Main_req_method.ID,
+		"main_req_url":     cfg.Panels.Main_req_url.ID,
+		"main_req_headers": cfg.Panels.Main_req_headers.ID,
+		"main_req_body":    cfg.Panels.Main_req_body.ID,
+		"main_res":         cfg.Panels.Main_res.ID,
+	}
+	return panelIDs, nil	
+}
+ --------------------------------- 
+FILE: logger.go -----------------------
+package utils 
+
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"time"
+	global "htty/globals"
+	types "htty/types"
+)
+
+/*
+	main utility for detailed logging, uses "logger" object to log out to stdout/file/etc...
+	
+	example usage:  Logf(LOG_INFO, "%s %d", str_, int_) [similar to C printf style]
+*/
+func Logf(level string, format string, args ...interface{}) {
+	if !assertAllowedLogLevel(level) {
+		return; 
+	}
+	ts := time.Now().Format("02-01-2006(15:04:05.000)")
+	//source = line that called this method
+	pc, _, line, ok := runtime.Caller(2)
+	caller := "unknown"
+	if ok {
+		fn := runtime.FuncForPC(pc)
+		if fn != nil {
+			caller = fmt.Sprintf("%s:%d", fn.Name(), line)
+		}
+	}
+	msg := fmt.Sprintf(format, args...)
+	global.Logger.Printf("level=%s ts=%s caller=%s msg=%q", level, ts, caller, msg)
+}
+
+// Logf with LOGLEVEL=debug 
+func Debugf(format string, args ...interface{}) {
+	Logf(global.LOG_DEBUG, format, args...)
+}
+
+// Logf with LOGLEVEL=info
+func Infof(format string, args ...interface{}) {
+	Logf(global.LOG_INFO, format, args...)
+}
+
+// Logf with LOGLEVEL=error
+func Errorf(format string, args ...interface{}) {
+	Logf(global.LOG_ERROR, format, args...)
+}
+
+
+/*
+	Redirect the logs to some file(default=htty.log) by changing the logger object's sink
+	(since TUI blocks stdout, its better to log this way)
+*/
+func RedirectLogs_toFile(outFile string, overwrite bool) *os.File {
+	var flags int
+	if overwrite {
+		flags = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	} else {
+		flags = os.O_CREATE | os.O_WRONLY | os.O_APPEND
+	}
+	logfile, err := os.OpenFile(outFile, flags, 0644)
+	if err != nil {
+		panic(err)
+	}
+	global.Logger.SetOutput(logfile)
+	return logfile	
+}
+
+
+// internal method for Logf to check if the log is allowed in this "LOGLEVEL" 
+// (ex LOGLEVEL=all means allow all, LOGLEVEL=debug means allow only debug) 
+func assertAllowedLogLevel(level string) bool {
+	if global.LOGLEVEL == global.LOG_ALL {
+		return true;	
+	}		
+	if global.LOGLEVEL == level {
+		return true;	
+	}
+	return false
+}
+
+//get path to where the logger was called in the program runtime
+func pathBase(fp string) string {
+	lastslash := -1
+	for id := len(fp) - 1; id >= 0; id-- {
+		if fp[id] == '/' {
+			lastslash = id
+			break
+		}
+	}
+	if lastslash >= 0 && lastslash+1 < len(fp) {
+		return fp[lastslash+1:]
+	}
+	return fp
+}
+
+
+// --------------------------------
+// Logging for specific structures
+// ex: to print status of HttpType object
+// -------------- -------------- --
+func HttpObjectLogOut(httpObj types.HttpType) {
+	Debugf("HTTP REQUEST ----")
+	Debugf("Method: %s", httpObj.Method)
+	Debugf("Path: %s", httpObj.Path)
+	if len(httpObj.Headers) > 0 {
+		Debugf("Headers:")
+		for k, v := range httpObj.Headers {
+			Debugf(" %s: %s", k, v)
+		}
+	}
+	if httpObj.Body != "" {
+		Debugf("Body:")
+		Debugf("%s", httpObj.Body)
+	}
+}
+ --------------------------------- 
+FILE: prefixcmp.go -----------------------
+package utils 
+
+import (
+	"bufio"
+	"os"
+	"slices"
+	"sort"
+	"strings"
+)
+
+/*
+	Prefix completions taking some prefix substring to get closest & shortest results from a file source
+	ex: hel --> [hell, hello, Hello...] (NOTE: it is case insensitive)
+*/
+func PrefixClosestSearch(substr string, filePath string) ([]string, error){
+	var words []string
+	var err error
+	words, err = ReadTextLines_intoList(filePath)
+	if err != nil { return nil, err; }
+	return PrefixClosestSearch_withOptions(substr, words);
+}
+
+
+/*
+	Prefix completions taking some prefix substring to get closest & shortest results from a source string aray
+	ex: hel --> [hell, hello, Hello...] (NOTE: it is case insensitive)
+*/
+
+func PrefixClosestSearch_withOptions(substr string, words []string) ([]string, error){	//first index where prefix matches
+	prefix := strings.ToLower(substr)
+	start := sort.Search(len(words), func(i int) bool {
+		return strings.ToLower(words[i]) >= prefix
+	})
+	// no possible matches
+	if start >= len(words) || !strings.HasPrefix(strings.ToLower(words[start]), prefix) {
+		return []string{}, nil
+	}
+	// scan forward until prefix doesn't match
+	end := start
+	for end < len(words) && strings.HasPrefix(strings.ToLower(words[end]), prefix) {
+		end++
+	}
+	return words[start:end], nil
+	
+}
+
+/*	Read from .txt file that have word per line
+		Returns (string array of res[i]= ith line of file)
+*/
+func ReadTextLines_intoList(filePath string) ([]string, error){
+	var words[] string
+	file, err := os.Open(filePath)
+	if err != nil {
+		Errorf("file %s doesn't exist!", filePath)	
+		return nil, err
+	}
+	defer file.Close()
+
+	ptr := bufio.NewScanner(file)
+	for ptr.Scan(){
+		words = append(words, ptr.Text())
+	}
+	return words, nil 
+}
+
+// Dump word into file at (filePath) with insertion sorted manner
+func Insert_SortedFile(word string, filePath string) error {
+	//sort line words string[] with case sensitivity (apple != Apple)
+	var words []string;
+	var err error;
+	words, err = ReadTextLines_intoList(filePath)
+
+	if slices.Contains(words, word) {
+		//skip if word already exists
+		return nil;
+	}
+	words = append(words, word)
+	sort.Slice(words, func(i, j int) bool {
+		w1 := strings.ToLower(words[i])
+		w2 := strings.ToLower(words[j])
+
+		if w1 == w2 {
+			return words[i] < words[j] 
+		}
+		return w1 < w2
+	})
+	//dump to file
+	file, err := os.Create(filePath)
+	if err != nil {
+		Errorf("file %s unable to create!", filePath)	
+		return err
+	}
+	defer file.Close()
+
+	//buffer writes
+	wptr := bufio.NewWriter(file)
+	for lineidx, word := range words {
+		if _, err := wptr.WriteString(word + "\n"); err != nil {
+			Errorf("unable to write word %s into file %s (line %d)", word, filePath, lineidx)	
+			return err;	
+		}
+	}
+	//push saved buffer onto file
+	if err := wptr.Flush(); err != nil {
+		Errorf("unable to write onto file %s", filePath)
+		return err;
+	}
+	return nil
+}
+
+func CheckFileExists(filePath string) (bool) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return false
+	}
+	file.Close()	
+	return true
+}
+ --------------------------------- 
+FILE: http.go -----------------------
+package utils 
+	
+import (
+	"net/http"
+	"io"
+	"time"
+	"strings"
+	global "htty/globals"
+	types "htty/types"
+)  
+
+
+/* 
+	Sends an HTTP request with the given method, URL, headers, and body.
+ 	
+	Returns: (response body bytes, status code, error if any).
+*/
+func HTTPCaller(httpObj types.HttpType) ([]byte, map[string]string, int, error) {
+	if !AssertHTTPMethodType(httpObj.Method) {
+		Errorf("HTTP method type not valid: %s", httpObj.Method)			
+	}
+	client := &http.Client{
+		Timeout: time.Duration(global.REQUEST_TIMEOUT) * time.Second,
+	}
+	//encapsulate request
+	var bodyBuffer io.Reader
+	if httpObj.Body != "" {
+		bodyBuffer = strings.NewReader(httpObj.Body)
+	}
+	request, err := http.NewRequest(httpObj.Method, httpObj.Path, bodyBuffer)
+	if err != nil {
+		return nil, nil, 0, err
+	}	
+	for header, val := range httpObj.Headers {
+		request.Header.Set(header, val)
+	}
+	//make request
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	defer resp.Body.Close()
+	responseHeaders := getHTTPHeadersMap(resp.Header)
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, resp.StatusCode, err
+	}
+	return respBody, responseHeaders, resp.StatusCode, nil
+}
+
+
+/*
+	Takes headers string of k/v pairs seperated by lines and compose header map(key -> val)
+	Assumes key value are delimited by ':', example:
+
+	Authorization: Bearer Token
+	Content-Type: application/json
+	...
+*/
+func HeaderKVparser(rawHeaders string) map[string]string{
+	headers := make(map[string]string)
+	for _, line := range strings.Split(rawHeaders, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		headers[key] = val
+	}
+	return headers;
+}
+
+//check if http method is of standard type(GET/POST/PUT/etc..)
+func AssertHTTPMethodType(method string) bool{
+	_, found := global.HTTP_METHOD[method]
+	if found {
+		return true;
+	}
+	return false;
+}
+
+
+//extract's request/response headers as map(key->val)
+func getHTTPHeadersMap(headers http.Header) map[string]string{
+	respHeaders := make(map[string]string, len(headers))
+	for key, val := range headers {
+		respHeaders[key] = strings.Join(val, ", ")
+	}
+	return respHeaders
+}
+
+ --------------------------------- 
+FILE: responses.go -----------------------
+/*
+Takes HTTP response's "Content-Type" header to format response as html, text, json, ...
+
+(ref for Content-Type in HTTP - https://httpwg.org/specs/rfc9110.html#field.content-type)
+*/
+package utils 
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"golang.org/x/net/html"
+)
+
+
+func ResponseParser_main(body []byte, headers map[string]string, status int, isVerbose bool) string{
+	contentType := GetResponse_ContentMimeType(headers["Content-Type"])
+	if contentType == ""  {
+		return defaultFormatter(body, headers, status, isVerbose)
+	}
+	var output strings.Builder
+	if isVerbose {
+		headersFmt := formatHeaders_verbose(headers, status)
+		fmt.Fprintf(&output, "%s\n", headersFmt)
+	}
+	var bodyFmt string
+	switch(contentType){
+		case "text/plain":
+			bodyFmt = string(body) 
+		case "text/html":
+			bodyFmt = formatBody_html(body)
+		case "application/json":	
+			bodyFmt = formatBody_json(body)
+		default:
+			return defaultFormatter(body, headers, status, isVerbose)
+	}
+	fmt.Fprintf(&output, "\n%s", bodyFmt)
+	return output.String()
+}
+
+//for a response's Content-Type, what will be its file extension
+//(example -> json for application/json, html for )
+func GetResponseContent_FileExtension(respContentType string) string{
+	respContentMimeType := GetResponse_ContentMimeType(respContentType)
+	switch(respContentMimeType){
+		case "text/plain":
+			return "txt"
+		case "text/html":
+			return "html"
+		case "application/json":	
+			return "json"
+		default:
+			return "txt"
+	}
+}
+
+/// ---------------------------------------
+//Formatters ------------------------
+func defaultFormatter(body []byte, headers map[string]string, status int, isVerbose bool) string{
+	var output strings.Builder
+	if isVerbose {
+		fmt.Fprintf(&output, "%s", formatHeaders_verbose(headers, status))
+	}
+	fmt.Fprintf(&output, "\n%s", string(body))
+	return output.String()
+}
+
+func formatHeaders_verbose(headers map[string]string, status int) string{
+	var output strings.Builder
+	fmt.Fprintf(&output, "Status: %d\n\n", status)
+	// headers 
+	if len(headers) > 0 {
+		output.WriteString("Headers:\n")
+		for key, value := range headers {
+			fmt.Fprintf(&output, "  %s: %s\n", key, value)
+		}
+	}
+	return output.String()
+}
+
+func formatBody_json(body []byte) string {
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, body, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("[Invalid JSON - showing raw]\n%s", string(body))
+	}
+	return prettyJSON.String()
+}
+
+func formatBody_html(body []byte) string {
+	doc, err := html.Parse(bytes.NewReader(body))
+	if err != nil {
+		return fmt.Sprintf("[Invalid HTML - showing raw]\n%s", string(body))
+	}
+	var buf bytes.Buffer
+	
+	var render func(*html.Node, int)
+	render = func(n *html.Node, depth int) {
+		indent := bytes.Repeat([]byte("  "), depth)
+		
+		switch n.Type {
+		case html.ElementNode:
+			buf.Write(indent)
+			buf.WriteString("<" + n.Data)
+			for _, attr := range n.Attr {
+				fmt.Fprintf(&buf, " %s=\"%s\"", attr.Key, attr.Val)
+			}
+			buf.WriteString(">\n")
+			
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				render(c, depth+1)
+			}
+			
+			buf.Write(indent)
+			buf.WriteString("</" + n.Data + ">\n")
+			
+		case html.TextNode:
+			text := bytes.TrimSpace([]byte(n.Data))
+			if len(text) > 0 {
+				buf.Write(indent)
+				buf.Write(text)
+				buf.WriteString("\n")
+			}
+			
+		case html.DocumentNode:
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				render(c, depth)
+			}
+		}
+	}
+	
+	render(doc, 0)
+	return buf.String()
+}
+
+//--------------------------------
+//Other utilities
+
+// extract just the MIME type for response's Content-Type 
+func GetResponse_ContentMimeType(respContentTypeHeader string) string{
+	contentType := strings.TrimSpace(strings.Split(respContentTypeHeader, ";")[0])
+	return contentType
+}
+ --------------------------------- 
+FILE: general.go -----------------------
+// pure utility methods like calculations, rounding, array/object operations, etc..
+package utils
+
+import (
+	"bufio"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
+	types "htty/types"
+	"os"
+	"os/exec"
+	"runtime"
+)
+
+func GetPercent(percentage int, source int) int{
+	return (percentage * source)/100
+}
+
+//write raw string contents into a file at filepath
+func WriteFileContents(filePath string, contents string) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	//write into buffer & flush push writes 
+	wptr := bufio.NewWriter(file)
+	wptr.WriteString(contents)
+	if err := wptr.Flush(); err != nil {
+		Errorf("unable to write onto file %s", filePath)
+		return err;
+	}
+	return nil
+}
+
+func GenerateRandomUUID(size int) string{
+	//1 byte = 2 hex characters
+	numBytes := (size + 1) / 2
+	bytes := make([]byte, numBytes)
+	rand.Read(bytes)
+	
+	var uuid string = hex.EncodeToString(bytes)
+	if len(uuid) > size {
+		uuid = uuid[:size]
+	}
+	return uuid
+}
+
+//pops up dialog to save file(depending on OS may vary)
+func SaveFileDialog(defaultName string) (string, error) {
+	var cmd *exec.Cmd
+	//TODO: adding support for darwin & windows 
+	switch runtime.GOOS {
+	case "linux": 
+		cmd = exec.Command("zenity", "--file-selection", "--save", "--filename="+defaultName, "--confirm-overwrite")
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	// trim whitespace/newlines
+	result := string(output)
+	if len(result) > 0 && result[len(result)-1] == '\n' {
+		result = result[:len(result)-1]
+	}
+	return result, nil
+}
+
+
+//loads from ".htty" file (json type) to get a httystate object
+func LoadState(filepath string) (types.HttyState) {
+	var statebuf types.HttyState
+	
+	return statebuf
+}
+
+//take current httystate from req/res & save into file
+func SaveState(curstate types.HttyState, filepath string) error {
+	stateJson, err :=  json.Marshal(curstate);
+	if err != nil { return err }
+	err = WriteFileContents(filepath, string(stateJson))
+	if err != nil { return err }
+	return nil
+}
+ --------------------------------- 
+FILE: panels.go -----------------------
+package utils 
+
+import (
+	"fmt"
+	global "htty/globals"
+	types "htty/types"
+
+	"strconv"
+	"strings"
+	"regexp"
+
+	"charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+//move focus of cursor onto next item in panels list 
+//(present at types/panels -> PANEL_FOCUS_IDS)
+func PanelFocusNext(focusID *int){
+	(*focusID)++
+	if (*focusID >= global.FOCUSABLE_PANELS){
+		(*focusID) = 0
+	}
+}
+
+//move focus of cursor onto previous item in panels list 
+//(present at types/panels -> PANEL_FOCUS_IDS)
+func PanelFocusPrev(focusID *int){
+	(*focusID)--
+	if (*focusID < 0){
+		(*focusID) = global.FOCUSABLE_PANELS-1
+	}
+}
+
+func GetPanelTitleLabel(title string, id int) string {
+	return fmt.Sprintf(" [%d] %s ", id, title)
+}
+
+func SetStatusLineOptions(options []string){
+	global.StatusLineOptions = options
+}
+
+
+//for a panel, what are the action keys , like alt+s, alt+c allowed as per its "Keys"
+func GetPanelActionKeys(panelCfg types.HttyPanel) []string{
+	var keys []string;
+	for _, key := range panelCfg.Keys {
+		keys = append(keys, key)
+	}
+	return keys 
+}
+
+
+//from panel's key (actions that appear on status line), generates string arr of options to show in statusline
+func GetPanel_KeyOptions(panelcfg types.HttyPanel) []string{
+	var options []string
+	for action, key := range panelcfg.Keys {
+		options = append(options, fmt.Sprintf("%s(%s)", action, key))
+	}
+	return options
+}
+
+//given a msg.Sting() from bubble tea.cmd, sees if event is a jump type 
+//jump type means tp jump to a panel with <key>+<number> (ex: alt+2)
+func EventIs_TypeJumpPanel(eventstr string) (bool, int) {
+	re := regexp.MustCompile(`^`+ global.Config.Key.Jumpleader +`\+([0-9])$`)
+	if matches := re.FindStringSubmatch(eventstr); matches != nil {
+		panelNum, _ := strconv.Atoi(matches[1])
+		return true, panelNum
+	}
+	return false, 0
+} 
+
+//jump to panel using the panelID(2) or panel mapping string(ex: "PANEL_REQ_METHOD_ID") 
+//(present at types/panels -> PANEL_FOCUS_IDS)
+//NOTE: using the panel enums constant is recommended, instead of using hardcoded magic numbers
+func PanelFocusJump(focusID *int, newfocuskey interface{}){
+	switch newfocuskey.(type) {
+		case int:
+			*focusID = newfocuskey.(int)
+		case string:
+			*focusID = (global.PANEL_FOCUS_IDS[(newfocuskey.(string))])
+	}	
+}
+
+/*
+	passes tea Msg object to child panels for handling update events, 
+	in order words, it allows these child panels to be "updated" to new events
+	
+	usage:  UpdatePanels(msg, &childpane1, &childpane2...)
+
+	"msg" is the object of type tea.Msg which can hold event actions like keyboard press, mouse clicks etc
+*/
+func UpdatePanels(msg tea.Msg, panels ...types.BasePanel) tea.Cmd {
+	var cmds []tea.Cmd
+	for _, p := range panels {
+		if cmd := p.Update(msg); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+	}
+	return tea.Batch(cmds...)
+}
+
+
+// Get focus color(bright) if this panel is focused on, or get unfocus color(dim) if this panel isnt in focus.  
+// Can be used for highlighting border of focused panels
+// (can pass panelID like costant PANEL_REQ_METHOD_ID present or string like "SIDE")
+func GetPanelFocusColor(panelkey interface{}) string {
+	var panelID int
+	switch panelkey.(type){
+		case int:
+			panelID = panelkey.(int)
+		case string:
+			panelID = (global.PANEL_FOCUS_IDS[(panelkey.(string))])
+	}
+	if global.CurrentPanelID == panelID {
+		return global.Config.Common.Focus_border_color 
+	}
+	return global.Config.Common.Unfocus_border_color
+}
+
+func SetBorder(cfg types.BorderConfig) lipgloss.Style {
+	style := lipgloss.NewStyle().
+		Width(cfg.Width).
+		Height(cfg.Height).
+		Background(lipgloss.Color(global.Config.Common.Background_color))
+	
+	enabled := true
+	if cfg.Enabled {
+		enabled = true
+	}
+	if !enabled {
+		return style
+	}
+	
+	border := cfg.Border
+	if border == (lipgloss.Border{}) {
+		border = lipgloss.NormalBorder()
+	}
+	
+	top := true
+	bottom := true
+	left := true
+	right := true
+	if cfg.Top || cfg.Bottom || cfg.Left || cfg.Right {
+		top = cfg.Top
+		bottom = cfg.Bottom
+		left = cfg.Left
+		right = cfg.Right
+	}
+	
+	// CHANGED: Use single Border() call with all sides
+	style = style.Border(border, top, right, bottom, left)
+
+	if cfg.Color != "" {
+		style = style.BorderForeground(lipgloss.Color(cfg.Color))
+	}
+	return style
+}
+
+
+func SetBorderStyle_WithLabel(style lipgloss.Style, content string, cfg types.BorderConfig, label string, position string) string {
+    if label == "" {
+        return style.Render(content)
+    }
+    
+    isTop := position == "top"
+    isBottom := position == "bottom"
+    
+    if (isTop && !cfg.Top) || (isBottom && !cfg.Bottom) {
+        return style.Render(content)
+    }
+    
+    // render content with all borders EXCEPT the one we're labeling
+    cfgModified := cfg
+    if isTop {
+        cfgModified.Top = false
+    } else {
+        cfgModified.Bottom = false
+    }
+    
+    // get styling from the original style
+    borderFgColor := style.GetBorderTopForeground()
+    contentWithBorders := SetBorder(cfgModified).
+        BorderForeground(borderFgColor).
+        Margin(style.GetMarginTop(), style.GetMarginRight(), style.GetMarginBottom(), style.GetMarginLeft()).
+        Background(style.GetBackground()).
+        Render(content)
+    
+    // manually construct labeled border
+    border := cfg.Border
+    if border == (lipgloss.Border{}) {
+        border = lipgloss.NormalBorder()
+    }
+    color := lipgloss.Color(cfg.Color)
+    
+    var leftCorner, rightCorner, horizontal string
+    if isTop {
+        leftCorner = border.TopLeft
+        rightCorner = border.TopRight
+        horizontal = border.Top
+    } else {
+        leftCorner = border.BottomLeft
+        rightCorner = border.BottomRight
+        horizontal = border.Bottom
+    }
+    
+    // calculate width from the rendered content
+    contentWidth := lipgloss.Width(contentWithBorders)
+    remainingWidth := max(contentWidth - lipgloss.Width(label) - 2, 0)
+    
+    // build the entire line FIRST, then style it all at once
+    borderLine := leftCorner + label + strings.Repeat(horizontal, remainingWidth) + rightCorner
+    labeledBorder := lipgloss.NewStyle().Foreground(color).Render(borderLine)
+    
+    var result string
+    if isTop {
+        result = lipgloss.JoinVertical(lipgloss.Left, labeledBorder, contentWithBorders)
+    } else {
+        result = lipgloss.JoinVertical(lipgloss.Left, contentWithBorders, labeledBorder)
+    }
+    return result
+}
+
+
+func SetBorderStyle_WithLabelTop(style lipgloss.Style, content string, cfg types.BorderConfig, label string) string {
+    return SetBorderStyle_WithLabel(style, content, cfg, label, "top")
+}
+
+func SetBorderStyle_WithLabelBottom(style lipgloss.Style, content string, cfg types.BorderConfig, label string) string {
+    return SetBorderStyle_WithLabel(style, content, cfg, label, "bottom")
+}
+
+
+func SetFullBorder(width, height int, color string) lipgloss.Style {
+	return SetBorder(types.BorderConfig{
+		Width:  width,
+		Height: height,
+		Color:  color,
+	})
+}
+
+func SetBorderOneSide(width, height int, color string, direction string) lipgloss.Style {
+	cfg := types.BorderConfig{
+		Width:  width,
+		Height: height,
+		Color:  color,
+		Top:    false,
+		Bottom: false,
+		Left:   false,
+		Right:  false,
+	}
+	switch direction {
+	case global.BORDER_UP:
+		cfg.Top = true
+	case global.BORDER_DOWN:
+		cfg.Bottom = true
+	case global.BORDER_LEFT:
+		cfg.Left = true
+	case global.BORDER_RIGHT:
+		cfg.Right = true
+	}
+	
+	return SetBorder(cfg)
+}
+
+/*
+	Creates a new layer of lipgloss compositor 
+	(ref - https://github.com/charmbracelet/lipgloss?tab=readme-ov-file#compositing)
+
+	(pane types.BasePanel) - what panel, since that's View() is also invoked
+
+	(paneCfg) - which panel config, since that configs like margin, size is taken
+
+	(offsets) - x, y offsets for margin if needed
+
+	Returns a new lipgloss layer to be Rendered
+*/
+func CreateNewLayer(pane types.BasePanel, paneCfg types.HttyPanel, offsets ...int) *lipgloss.Layer {
+	var xoff int = 0
+	var yoff int = 0
+	if(len(offsets) >= 2){
+		yoff += offsets[1]
+	}
+	if(len(offsets) >= 1){
+		xoff += offsets[0]
+	}
+	var newlayer *lipgloss.Layer = lipgloss.NewLayer(pane.View()).
+					X(paneCfg.Margin[0] + xoff).
+					Y(paneCfg.Margin[1] + yoff).
+					Z(paneCfg.Layer)
+	return newlayer 
+}
+ --------------------------------- 
+FILE: rough_test.go -----------------------
+package htty_test
+ --------------------------------- 
+FILE: completions_test.go -----------------------
+package htty_test
+
+import (
+	utils "htty/utils"
+	"os"
+	"testing"
+	"strings"
+)
+
+func TestSortedInsertReadAndSearch(tt *testing.T) {
+	// temp file
+	f, err := os.CreateTemp("", "words-*.txt")
+	if err != nil {
+		tt.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(f.Name())
+	f.Close()
+
+	path := f.Name()
+
+	// insert words
+	input := []string{
+		"Apple",
+		"apple",
+		"Hel",
+		"Hell",
+		"Hello",
+		"HelloWorld",
+		"random",
+		"Word",
+	}
+
+	for _, w := range input {
+		if err := utils.Insert_SortedFile(w, path); err != nil {
+			tt.Fatalf("insert failed: %v", err)
+		}
+	}
+
+	// read and verify sorted order (case-insensitive primary)
+	words, err := utils.ReadTextLines_intoList(path)
+	if err != nil {
+		tt.Fatalf("read failed: %v", err)
+	}
+
+	for i := 1; i < len(words); i++ {
+		prev := words[i-1]
+		curr := words[i]
+
+		if !(strings.ToLower(prev) < strings.ToLower(curr) ||
+			(strings.EqualFold(prev, curr) && prev <= curr)) {
+			tt.Errorf("not sorted at index %d: %s, %s", i, prev, curr)
+		}
+	}
+
+	// prefix search
+	res, err := utils.PrefixClosestSearch("hello", path)
+	if err != nil {
+		tt.Fatalf("search failed: %v", err)
+	}
+
+	expected := []string{"Hello", "HelloWorld"}
+
+	if len(res) != len(expected) {
+		tt.Errorf("expected %d results, got %d", len(expected), len(res))
+	}
+
+	for i := range expected {
+		if res[i] != expected[i] {
+			tt.Errorf("expected %s, got %s", expected[i], res[i])
+		}
+	}
+}
+ --------------------------------- 
+FILE: http_test.go -----------------------
+package htty_test
+
+import (
+	http "htty/utils"
+	types "htty/types"
+	"testing"
+	"encoding/json"
+)
+
+func TestHTTPMethod(tt *testing.T){
+	method := "PUT"
+	var correctMethod bool = http.AssertHTTPMethodType(method)
+	if !correctMethod {
+		tt.Errorf("%s is not valid", method)
+	}
+}
+
+func TestHTTPCall_SimpleGet(tt *testing.T){
+	req := types.HttpType{
+		Path:   "http://example.com",
+		Method: "GET",
+	}
+	_, headers, status, err := http.HTTPCaller(req)
+	if err != nil {
+		tt.Fatalf("unexpected error: %v", err)
+	}
+	if status != 200 {
+		tt.Fatalf("expected status 200, got %d", status)
+	}
+	if headers["Content-Type"] != "text/html" {
+		tt.Fatalf("expected Content-Type: text/html, got: %s", headers["Content-Type"])
+	}
+}
+
+
+// curl equivalent:
+// curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -H "X-Custom-Test: htty" \
+//   -d '{"name":"htty","role":"dev"}'
+func TestHTTPCaller_PostWithHeadersAndBody(tt *testing.T) {
+	req := types.HttpType{
+		Path:   "https://httpbin.org/post",
+		Method: "POST",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"X-Custom-Test": "htty",
+		},
+		Body: `{"name":"htty","role":"dev"}`,
+	}
+	body, _, status, err := http.HTTPCaller(req)
+	if err != nil {
+		tt.Fatalf("unexpected error: %v", err)
+	}
+
+	if status != 200 {
+		tt.Fatalf("expected status 200, got %d", status)
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		tt.Fatalf("invalid json response: %v", err)
+	}
+
+	// validate echoed header
+	headers := parsed["headers"].(map[string]any)
+	if headers["X-Custom-Test"] != "htty" {
+		tt.Fatalf("header not echoed correctly")
+	}
+
+	// validate echoed body
+	data := parsed["data"].(string)
+	if data != `{"name":"htty","role":"dev"}` {
+		tt.Fatalf("body not echoed correctly")
+	}
+}
+
+
+
+func TestHeaderKVparser_Basic(tt *testing.T) {
+	raw := `
+Authorization: Bearer Token
+Content-Type: application/json
+X-Test: 123
+`
+	headers := http.HeaderKVparser(raw)
+	if len(headers) != 3 {
+		tt.Fatalf("expected 3 headers, got %d", len(headers))
+	}
+	if headers["Authorization"] != "Bearer Token" {
+		tt.Fatalf("unexpected Authorization value: %s", headers["Authorization"])
+	}
+	if headers["Content-Type"] != "application/json" {
+		tt.Fatalf("unexpected Content-Type value: %s", headers["Content-Type"])
+	}
+	if headers["X-Test"] != "123" {
+		tt.Fatalf("unexpected X-Test value: %s", headers["X-Test"])
+	}
+}
+
+func TestHeaderKVparser_IgnoreInvalidAndEmpty(tt *testing.T) {
+	raw := `
+InvalidLineWithoutColon
+Another-Bad-Line
+
+Accept: application/json
+`
+	headers := http.HeaderKVparser(raw)
+	if len(headers) != 1 {
+		tt.Fatalf("expected 1 valid header, got %d", len(headers))
+	}
+	if headers["Accept"] != "application/json" {
+		tt.Fatalf("unexpected Accept value: %s", headers["Accept"])
+	}
+}
+ --------------------------------- 
+FILE: panel_test.go -----------------------
+package htty_test
+
+import (
+	utils "htty/utils"	
+	global "htty/globals"
+	"testing"
+)
+
+func TestPanelFocusControl(tt *testing.T){
+	var err error
+	global.PANEL_FOCUS_IDS, err = utils.GetPanelIDsMap(global.Config)
+	if err != nil { tt.Errorf("unable to initialize panels list") }
+	var currentPanel int = 0	
+	//forwards
+	utils.PanelFocusNext(&currentPanel)
+	if currentPanel != 1 {
+		tt.Errorf("panelID: %d, expected: %d", currentPanel, 1)
+	}
+	//back
+	utils.PanelFocusPrev(&currentPanel)
+	if currentPanel != 0 {
+		tt.Errorf("panelID: %d, expected: %d", currentPanel, 0)
+	}
+	//jumps
+	utils.PanelFocusJump(&currentPanel, 2)
+	if currentPanel != 2 {
+		tt.Errorf("panelID: %d, expected: %d", currentPanel, 2)
+	}
+
+	utils.PanelFocusJump(&currentPanel, global.PANEL_FOCUS_IDS["SIDE"])
+	if currentPanel != 0 {
+		tt.Errorf("panelID: %d, expected: %d", currentPanel, 0)
+	}
+}
+
+ --------------------------------- 
+FILE: main.go -----------------------
+package panels
+
+import (
+	global "htty/globals"
+	"htty/types"
+
+	utils "htty/utils"
+	"time"
+
+	lipgloss "charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type tickMsg struct{}
+
+
+type MainPane struct {
+	width        int
+	height       int
+	requestPane  RequestPane
+	responsePane ResponsePane
+	compositor   *lipgloss.Compositor
+	dots string 
+}
+
+func (main *MainPane) Init() tea.Cmd {
+	utils.Infof("main panel initialization")
+	main.requestPane.Init()
+	main.responsePane.Init()
+	return nil
+}
+
+func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == global.Config.Key.Sendapicall {
+			main.responsePane.loading = true
+			main.dots = ""
+			return tea.Batch(
+				tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg{} }),
+				func() tea.Msg {
+					resp, headers, status, err := utils.HTTPCaller(main.requestPane.ExportPayload())
+					if err != nil {
+						utils.Errorf("error loading response, error: %v", err)
+					}
+					return types.HttpRespState{
+						Output: utils.ResponseParser_main(resp, headers, status, false), 
+						Raw: string(resp), Headers: headers, Status: status,
+					}
+				},
+			)
+		}
+
+	case tickMsg:
+		if main.responsePane.loading {
+			main.dots += "."
+			main.responsePane.SetResponse("Loading"+ main.dots, "", nil, 0)
+			return tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg{} })
+		}
+		return nil;
+	case types.HttpRespState:
+		main.responsePane.SetResponse(msg.Output, msg.Raw, msg.Headers, msg.Status)
+		main.responsePane.loading = false
+	}
+
+	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
+}
+
+func (main *MainPane) View() string {
+	reqLayer := utils.CreateNewLayer(&main.requestPane, global.Config.Panels.Main_req)
+	resLayer := utils.CreateNewLayer(&main.responsePane, global.Config.Panels.Main_res,
+		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
+	)
+	main.compositor = lipgloss.NewCompositor(reqLayer, resLayer)
+	mainStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return mainStyle.Render(main.compositor.Render())
+}
+
+func (main *MainPane) SetSize(width int, height int) {
+	main.width = width
+	main.height = height
+	main.requestPane.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req.Width, main.width),
+		utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
+	)
+	main.responsePane.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_res.Width, main.width),
+		utils.GetPercent(global.Config.Panels.Main_res.Height, main.height),
+	)
+}
+
+
+ --------------------------------- 
+FILE: response.go -----------------------
+package panels 
+
+import (
+	"fmt"
+	components "htty/panels/components"
+	types "htty/types"
+	utils "htty/utils"
+	"slices"
+
+	global "htty/globals"
+	"os"
+
+	"github.com/atotto/clipboard"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/pkg/browser"
+)
+
+type ResponsePane struct {
+	textpane components.PagerPane
+	//objects gets filled after API call from main -> response
+	bodyRaw string
+	headersRaw map[string]string
+	status int
+
+	loading bool
+	verboseAllow bool
+}
+
+func (res *ResponsePane) Init() tea.Cmd {
+	utils.Infof("response panel initialization")
+	res.textpane = NewResponseTextComponent()
+	res.textpane.Init()
+	return nil
+}
+
+func (res *ResponsePane) Update(msg tea.Msg) tea.Cmd {
+	responseActionKeys := global.Config.Panels.Main_res.Keys		
+	actionKeys := utils.GetPanelActionKeys(global.Config.Panels.Main_res)
+	focused := (global.CurrentPanelID == global.Config.Panels.Main_res.ID)
+	switch msg := msg.(type) {
+		case tea.KeyMsg:
+		if focused{
+			switch msg.String(){
+				case responseActionKeys["save"]:
+					res.saveDialog()
+				case responseActionKeys["open"]:
+					res.openView()
+				case responseActionKeys["copy"]:	
+					res.copyClipboard()
+				case responseActionKeys["verbose"]:
+					res.verboseToggle()
+			}		
+			if slices.Contains(actionKeys, msg.String()){
+				return nil
+			}
+		}	
+	}
+	return res.textpane.Update(msg)
+}
+
+func (res ResponsePane) View() string {
+	return res.textpane.View()
+}
+
+func (res *ResponsePane) SetSize(width int, height int) {
+	res.textpane.SetSize(width-2, height)
+}
+
+func (res *ResponsePane) SetResponse(formattedResp string, rawBody string, headers map[string]string, status int) {
+	res.bodyRaw = rawBody
+	res.headersRaw = headers
+	res.status = status
+	res.textpane.SetContent(formattedResp)
+}
+
+func NewResponseTextComponent() components.PagerPane {
+	var responseTextComponent = components.PagerPane {
+		PanelTitle: global.Config.Panels.Main_res.Title,
+		PanelID:     global.PANEL_RES,
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		StatusOptions: utils.GetPanel_KeyOptions(global.Config.Panels.Main_res),
+	}
+	return responseTextComponent
+}
+
+func (res *ResponsePane) saveDialog() {
+	filename, err := utils.SaveFileDialog("response.txt") 
+	//may happen if dialog closed force(cancelled), its fine, but is still logged
+    if err != nil {
+       utils.Errorf("%v", err) 
+    }	
+	os.WriteFile(filename, []byte(res.textpane.Content), 0644)
+}
+
+//saves body content to temp dir's random file and opens that file in browser/editor/etc...
+func (res *ResponsePane) openView() {
+	fileType := utils.GetResponseContent_FileExtension(res.headersRaw["Content-Type"])
+	randomFileNameUUID := utils.GenerateRandomUUID(16)
+	filePath := fmt.Sprintf("%s/%s.%s", global.TEMP_DIR, randomFileNameUUID, fileType)
+	content := res.textpane.Content 
+	err := utils.WriteFileContents(filePath, content)
+	if err != nil {
+		panic(err)
+	}
+    browser.OpenFile(filePath)
+}
+
+func (res *ResponsePane) copyClipboard() {
+	clipboard.WriteAll(res.textpane.Content)	
+}
+
+func (res *ResponsePane) verboseToggle(){
+	res.verboseAllow = !res.verboseAllow
+	var newOutput string = utils.ResponseParser_main([]byte(res.bodyRaw), res.headersRaw, 
+								res.status, res.verboseAllow) 
+	res.SetResponse(newOutput, string(res.bodyRaw), res.headersRaw, res.status)
+}
+
+
+//TODO: when sidepanel tree triggers load/unload
+func (res *ResponsePane) StateLoader(){}
+ --------------------------------- 
+FILE: statusline.go -----------------------
+package panels 
+
+import (
+	global "htty/globals"
+	"strings"
+
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/bubbletea"
+)
+
+type StatusLinePane struct {
+	options []string
+}
+
+
+func (status *StatusLinePane) Init() tea.Cmd {
+	return nil
+}
+
+func (status *StatusLinePane) Update(msg tea.Msg) tea.Cmd {
+	return nil
+}
+
+func (status *StatusLinePane) View() string {
+	status.options = global.StatusLineOptions
+	textStyle := lipgloss.NewStyle().
+					Foreground(lipgloss.Color(global.Config.Common.Statusline_options_color)).
+					Bold(true)
+	var renderedOptions []string
+	for _, opt := range status.options {
+		renderedOptions = append(renderedOptions, textStyle.Render(opt))
+	}
+	optionsStr := strings.Join(renderedOptions, "  ")	
+	return textStyle.Render(optionsStr)
+}
+ --------------------------------- 
+FILE: side.go -----------------------
+package panels
+
+import (
+	global "htty/globals"
+	"htty/panels/components"
+	"htty/types"
+	utils "htty/utils"
+
+	lipgloss "charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type SidePane struct {
+	width    int
+	height   int
+	fileTree components.FileTree
+}
+
+func (side *SidePane) Init() tea.Cmd {
+	side.fileTree = components.FileTree{
+		PanelID:    global.PANEL_SIDE_ID,
+		PanelTitle: "File tree sidebar",
+		Border:     types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true},
+	}
+	return side.fileTree.Init()
+}
+
+func (side *SidePane) Update(msg tea.Msg) tea.Cmd {
+    focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]
+    if focused {
+        utils.SetStatusLineOptions([]string{})
+    }
+    cmd := side.fileTree.Update(msg)
+    if didSelect, path := side.fileTree.Picker.DidSelectFile(msg); didSelect {
+        FileTreeHandler(path)
+    }
+    return cmd
+}
+
+func (side SidePane) View() string {
+	border := types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true}
+	focusColor := utils.GetPanelFocusColor(global.PANEL_SIDE_ID)
+	style := utils.SetBorder(border).
+		BorderForeground(lipgloss.Color(focusColor)).
+		Background(lipgloss.Color(global.Config.Common.Background_color)).
+		Margin(0, 0, 1, 0)
+
+	return utils.SetBorderStyle_WithLabelTop(style, side.fileTree.View(), border,
+		utils.GetPanelTitleLabel("File tree sidebar", global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]),
+	)
+}
+
+func (side *SidePane) SetSize(width int, height int) {
+	side.width = width
+	side.height = height
+	side.fileTree.SetSize(width, height)
+}
+
+func FileTreeHandler(path string) {
+	utils.Debugf("FileTreeHandler called - selected path: %s", path)
+}
+ --------------------------------- 
+FILE: text.go -----------------------
+package components 
+
+import (
+	global "htty/globals"
+	types "htty/types"
+	utils "htty/utils"
+
+	lipgloss "charm.land/lipgloss/v2"
+	"github.com/charmbracelet/bubbles/textarea"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type TextPane struct {
+	Width, Height int
+	Input         textarea.Model
+	CharLimit     int
+	PanelTitle    string
+	PanelID       string
+	Placeholder   string
+	Showline      bool
+	Border        types.BorderConfig
+	Margin        types.MarginConfig
+	StatusOptions []string
+}
+
+func (text *TextPane) Init() tea.Cmd {
+	var input textarea.Model = textarea.New()
+	input.Placeholder = text.Placeholder
+	input.ShowLineNumbers = text.Showline
+	input.SetHeight(text.Height)
+	input.CharLimit = text.CharLimit
+	input.Prompt = ""
+	text.Input = input	
+	return nil
+}
+
+func (text *TextPane) Update(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[text.PanelID]
+	//set a line focus pointer when this panel is focused on
+	if focused {
+		text.Input.Focus()
+		text.Input.Prompt = "│ "
+		utils.SetStatusLineOptions(text.StatusOptions)
+	} else {
+		text.Input.Blur()
+		text.Input.Prompt = ""
+	}
+	text.Input, cmd = text.Input.Update(msg)
+	return cmd
+}
+
+func (text TextPane) View() string {
+	text.Border.Color = utils.GetPanelFocusColor(text.PanelID) 
+	style := utils.SetBorder(text.Border).
+				BorderForeground(lipgloss.Color(text.Border.Color)).
+				Background(lipgloss.Color(global.Config.Common.Background_color)).
+				Margin(0,0,1,0)
+	return utils.SetBorderStyle_WithLabelTop(style, text.Input.View(), text.Border, 
+		utils.GetPanelTitleLabel(text.PanelTitle, global.PANEL_FOCUS_IDS[text.PanelID]),		
+	)
+}
+
+func (text *TextPane) SetSize(width, height int) {
+	text.Width = width
+	text.Height = height
+	text.Input.SetWidth(width)
+	text.Input.SetHeight(height)
+}
+ --------------------------------- 
+FILE: pager.go -----------------------
+package components 
+
+import (
+	types "htty/types"
+
+	global "htty/globals"
+
+	utils "htty/utils"
+	lipgloss "charm.land/lipgloss/v2"
+	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+
+type PagerPane struct {
+	Width, Height int
+	Viewport      viewport.Model
+	PanelTitle    string
+	PanelID       string
+	Content       string
+	StatusOptions []string
+	Border        types.BorderConfig
+	Margin        types.MarginConfig
+	ready         bool
+}
+
+func (pager *PagerPane) Init() tea.Cmd {
+	pager.Viewport = viewport.New(
+		pager.Width,
+		pager.Height,
+	)
+	pager.Viewport.SetContent(pager.Content)
+	pager.ready = true
+	return nil
+}
+
+func (pager *PagerPane) Update(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[pager.PanelID]
+	if focused {
+		utils.SetStatusLineOptions(pager.StatusOptions)
+	}
+	switch msg.(type) {
+	case tea.KeyMsg, tea.MouseMsg:
+		if focused {
+			pager.Viewport, cmd = pager.Viewport.Update(msg)
+		}
+	default:
+		pager.Viewport, cmd = pager.Viewport.Update(msg)
+	}
+	return cmd
+}
+
+func (pager *PagerPane) View() string {
+	pager.Border.Color = utils.GetPanelFocusColor(pager.PanelID)
+	style := utils.SetBorder(pager.Border).
+		BorderForeground(lipgloss.Color(pager.Border.Color)).
+		Background(lipgloss.Color(global.Config.Common.Background_color)).
+		Margin(0, 0, 1, 0)
+	return utils.SetBorderStyle_WithLabelTop(style, pager.Viewport.View(), pager.Border,
+		utils.GetPanelTitleLabel(pager.PanelTitle, global.PANEL_FOCUS_IDS[pager.PanelID]),
+	)
+}
+
+
+func (pager *PagerPane) SetSize(width, height int) {
+	pager.Width = width
+	pager.Height = height
+	pager.Viewport.Width = width
+	pager.Viewport.Height = height
+}
+
+func (pager *PagerPane) SetContent(content string) {
+	pager.Content = content
+	pager.Viewport.SetContent(content)
+	pager.Viewport.GotoTop()
+}
+
+func (pager *PagerPane) ScrollPercent() float64 {
+	return pager.Viewport.ScrollPercent()
+}
+
+ --------------------------------- 
+FILE: filetree.go -----------------------
+package components
+
+import (
+	"os"
+	global "htty/globals"
+	types "htty/types"
+	utils "htty/utils"
+
+	"github.com/charmbracelet/bubbles/filepicker"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type FileTree struct {
+	Width, Height int
+	Picker        filepicker.Model
+	PanelID       string
+	PanelTitle    string
+	Border        types.BorderConfig
+	Margin        types.MarginConfig
+	StatusOptions []string
+	err           error
+}
+
+func (ft *FileTree) Init() tea.Cmd {
+	picker := filepicker.New()
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd, _ = os.UserHomeDir()
+	}
+	picker.CurrentDirectory = cwd
+	picker.ShowPermissions = false
+	picker.ShowSize = false
+	picker.FileAllowed = true
+	picker.DirAllowed = false 
+	picker.AllowedTypes = append(picker.AllowedTypes, global.STATE_FILETYPE);
+
+	ft.Picker = picker
+	return ft.Picker.Init()
+}
+
+func (ft *FileTree) Update(msg tea.Msg) tea.Cmd {
+    var cmd tea.Cmd
+    focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[ft.PanelID]
+    if focused {
+        utils.SetStatusLineOptions(ft.StatusOptions)
+    }
+
+    switch msg.(type) {
+    case tea.KeyMsg:
+        if focused {
+            ft.Picker, cmd = ft.Picker.Update(msg)
+        }
+    default:
+        ft.Picker, cmd = ft.Picker.Update(msg)
+    }
+    return cmd
+}
+
+
+
+func (ft FileTree) View() string {
+	ft.Border.Color = utils.GetPanelFocusColor(ft.PanelID)
+	ft.Picker.SetHeight(ft.Height - 4)
+	return ft.Picker.View() 
+}
+
+func (ft *FileTree) SetSize(width, height int) {
+	ft.Width = width
+	ft.Height = height
+
+	w := width - 10
+	ft.Picker.Styles.File      = ft.Picker.Styles.File.Width(w)
+	ft.Picker.Styles.Directory = ft.Picker.Styles.Directory.Width(w)
+	ft.Picker.Styles.Selected  = ft.Picker.Styles.Selected.Width(w)
+}
+ --------------------------------- 
+FILE: textoptions.go -----------------------
+package components 
+
+import (
+	global "htty/globals"
+	types "htty/types"
+	utils "htty/utils"
+
+	"strings"
+
+	lipgloss "charm.land/lipgloss/v2"
+	"github.com/charmbracelet/bubbles/textarea"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type TextOptions struct {
+	Width, Height int
+	Input         textarea.Model
+	CharLimit     int
+	PanelTitle    string
+	PanelID       string
+	Placeholder   string
+	Showline      bool
+	Border        types.BorderConfig
+	Margin        types.MarginConfig
+	OptionBuffer   []string 
+	OptionsStore   []string   
+	OptionsFilePath string
+	AllowSaveInput    bool //whether to save inputs for later options once api call made
+	StatusOptions []string
+
+	selectIndex   int
+}
+
+func (text *TextOptions) Init() tea.Cmd {
+	var input textarea.Model = textarea.New()
+	input.Placeholder = text.Placeholder
+	input.ShowLineNumbers = text.Showline
+	input.CharLimit = text.CharLimit
+	input.Prompt = ""
+	text.Input = input
+
+	var err error
+	text.OptionsStore, err = utils.ReadTextLines_intoList(text.OptionsFilePath)
+	if err != nil { 
+		utils.Errorf("file %s could not be opened for options store, err: %v", text.OptionsFilePath, err); 
+	} else {  utils.Debugf("file %s successfully opened for options store", text.OptionsFilePath); }
+	return nil
+}
+
+func (text *TextOptions) Update(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[text.PanelID]
+	
+	if focused {
+		utils.SetStatusLineOptions(text.StatusOptions)
+		text.Input.Focus()
+		text.Input.Prompt = "│ "
+	} else {
+		text.Input.Blur()
+		text.Input.Prompt = ""
+	}
+
+	switch msg := msg.(type) {
+	//auto resize to window dimensions
+	case tea.KeyMsg:
+		switch msg.String(){
+		case global.Config.Key.Textoptions_prev:
+			text.selectIndex--
+			if text.selectIndex < 0 {
+				text.selectIndex = len(text.OptionBuffer) - 1  // Wrap to end
+			}
+			return cmd
+		case global.Config.Key.Textoptions_next:
+			text.selectIndex++
+			if text.selectIndex >= len(text.OptionBuffer) {
+				text.selectIndex = 0  // Wrap to beginning
+			}
+			return cmd
+		case global.Config.Key.CompleteText:
+			if focused && len(text.OptionBuffer)>=1{
+				text.Input.SetValue(text.OptionBuffer[text.selectIndex])
+				text.ClearOptions()
+				return cmd
+			}
+		case global.Config.Key.Sendapicall:
+			if text.AllowSaveInput{
+				err := utils.Insert_SortedFile(text.Input.Value(), text.OptionsFilePath)
+				utils.Debugf("saving %s into file %s", text.Input.Value(), text.OptionsFilePath)
+				if err != nil {
+					utils.Errorf("insertion of %s into file(%s) failed!", text.Input.Value(), text.OptionsFilePath)
+				}
+			}
+		}
+	}
+	
+	oldValue := text.Input.Value()
+	text.Input, cmd = text.Input.Update(msg)
+	if text.Input.Value() == "" {
+		text.ClearOptions()
+		return cmd;
+	}
+	if text.Input.Value() != oldValue {
+		text.SetOptions(text.Input.Value())
+	}
+	return cmd
+}
+
+// View renders just the text input (for use when called directly)
+func (text TextOptions) View() string {
+	baseView, _ := text.ViewWithOptions(false)
+	style := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return style.Render(baseView)
+}
+
+// ViewWithOptions returns the base view AND optionally the options layer
+// If withLayer is true, returns the options layer for compositor
+// If withLayer is false, returns nil layer (used when View() is called directly)
+func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, optionsLayer *lipgloss.Layer) {
+	// Render the base text input
+	inputStyle := utils.SetBorder(text.Border).BorderForeground(
+		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
+	).Margin(text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
+	).Background(lipgloss.Color(global.Config.Common.Background_color))
+	
+	text.Border.Color = utils.GetPanelFocusColor(text.PanelID)
+	baseView = utils.SetBorderStyle_WithLabelTop(inputStyle, text.Input.View(), text.Border, 
+		utils.GetPanelTitleLabel(text.PanelTitle, global.PANEL_FOCUS_IDS[text.PanelID]),		
+	)
+	// if not requesting layer, return early
+	if !withLayer {
+		return baseView, nil
+	}
+	
+	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[text.PanelID]
+	
+	// If not focused or no options, return nil layer
+	if !focused || len(text.OptionBuffer) == 0 {
+		return baseView, nil
+	}
+
+	// create options overlay
+	optionsStyle := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), true, true, true, true).
+		BorderForeground(lipgloss.Color(global.Config.Common.Focus_border_color)).
+		Background(lipgloss.Color(global.Config.Common.Background_color)).
+		Width(text.Width).
+		Padding(0, 1)
+
+	// style for selected item
+	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(global.Config.Common.Textoptions_selection_color))
+
+	// build options text with selected item highlighted
+	var optionsLines []string
+	for i, option := range text.OptionBuffer {
+		if i == text.selectIndex{
+
+			optionsLines = append(optionsLines, selectedStyle.Render(option))
+		} else {
+			optionsLines = append(optionsLines, option)
+		}
+	}
+	optionsText := strings.Join(optionsLines, "\n")
+	optionsBox := optionsStyle.Render(optionsText)
+	// return the options layer with Z=2 (above base panels)
+	optionsLayer = lipgloss.NewLayer(optionsBox).Z(2)
+	return baseView, optionsLayer
+}
+
+func (text *TextOptions) SetSize(width, height int) {
+	text.Width = width
+	text.Height = height
+	text.Input.SetWidth(width)
+	text.Input.SetHeight(height)
+}
+
+//change the Options[] with new suggestions
+func (text *TextOptions) SetOptions(inputstr string) {
+	text.OptionBuffer, _ = utils.PrefixClosestSearch_withOptions(inputstr, text.OptionsStore)	
+	text.selectIndex = 0
+}
+
+func (text *TextOptions) ClearOptions(){
+	text.selectIndex = 0
+	text.OptionBuffer = nil
+}
+ --------------------------------- 
+FILE: request.go -----------------------
+package panels 
+
+import (
+	global "htty/globals"
+	components "htty/panels/components"
+	types "htty/types"
+	utils "htty/utils"
+
+	"charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type RequestPane struct {
+	width, height int
+	focusIndex    int
+	initialized   bool
+	method        components.TextOptions
+	url           components.TextOptions
+	headers       components.TextPane
+	body          components.TextPane
+	compositor    *lipgloss.Compositor
+}
+
+func (rq *RequestPane) Init() tea.Cmd {
+	utils.Infof("request panel initialization")
+	rq.method, rq.url, rq.headers, rq.body = RequestSubPanels()
+	rq.method.Init()
+	rq.url.Init()
+	rq.headers.Init()
+	rq.body.Init()
+	rq.StateHandler()
+	return nil
+}
+
+func (rq *RequestPane) Update(msg tea.Msg) tea.Cmd {
+	return utils.UpdatePanels(msg, &rq.method, &rq.url, &rq.headers, &rq.body)
+}
+
+func (rq *RequestPane) buildCompositor() {
+	//request panels offset
+	methodWidth := utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.width)
+	methodHeight := utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.height)
+	headersWidth := utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.width)
+
+	//collect all layers
+	methodLayer := utils.CreateNewLayer(&rq.method, global.Config.Panels.Main_req_method)
+	_, methodOptionsLayer := rq.method.ViewWithOptions(true)
+	urlLayer := utils.CreateNewLayer(&rq.url, global.Config.Panels.Main_req_url, methodWidth)
+	_, urlOptionsLayer := rq.url.ViewWithOptions(true); 
+
+	headersLayer := utils.CreateNewLayer(&rq.headers, global.Config.Panels.Main_req_headers, 0, methodHeight)
+	bodyLayer := utils.CreateNewLayer(&rq.body, global.Config.Panels.Main_req_body, headersWidth, methodHeight)	
+	layers := []*lipgloss.Layer{methodLayer, urlLayer, headersLayer, bodyLayer}
+
+	// add options overlay if focused
+	if methodOptionsLayer != nil {
+		methodOptionsLayer.X(3).Y(methodHeight+3)
+		layers = append(layers, methodOptionsLayer)
+	}
+	if urlOptionsLayer != nil {
+		urlOptionsLayer.X(global.Config.Panels.Main_req_url.Margin[0]+11).Y(methodHeight+ 3)
+		layers = append(layers, urlOptionsLayer)
+	}	
+	rq.compositor = lipgloss.NewCompositor(layers...)
+}
+
+func (rq *RequestPane) View() string {
+	rq.buildCompositor()
+	reqStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
+	return reqStyle.Render(rq.compositor.Render())
+}
+
+func (rq *RequestPane) SetSize(width int, height int) {
+	rq.width = width
+	rq.height = height
+	rq.method.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_method.Width, rq.width),
+		utils.GetPercent(global.Config.Panels.Main_req_method.Height, rq.height),
+	)
+	rq.url.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_url.Width, rq.width),
+		utils.GetPercent(global.Config.Panels.Main_req_url.Height, rq.height),
+	)
+	rq.headers.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_headers.Width, rq.width),
+		utils.GetPercent(global.Config.Panels.Main_req_headers.Height, rq.height),
+	)
+	rq.body.SetSize(
+		utils.GetPercent(global.Config.Panels.Main_req_body.Width, rq.width),
+		utils.GetPercent(global.Config.Panels.Main_req_body.Height, rq.height),
+	)
+}
+
+//config for all the subpanels for Request
+func RequestSubPanels() (components.TextOptions, components.TextOptions, components.TextPane, components.TextPane) {
+	var methodTypeComponent = components.TextOptions{
+		CharLimit:   10,
+		PanelTitle: global.Config.Panels.Main_req_method.Title,
+		PanelID:     global.PANEL_REQ_METHOD_ID,
+		Placeholder: "Method",
+		Showline:    false,
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		OptionsFilePath: global.CachePrefix + "/method.txt",
+		StatusOptions: []string{},
+	}
+	var urlPathComponent = components.TextOptions{
+		CharLimit:   1024,
+		PanelTitle: global.Config.Panels.Main_req_url.Title,
+		PanelID:     global.PANEL_REQ_URL_ID,
+		Placeholder: "http://example/com",
+		Showline:    false,
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		OptionsFilePath: global.CachePrefix + "/url.txt",
+		AllowSaveInput: true,
+		StatusOptions: []string{},
+	}
+	var headersComponent = components.TextPane{
+		CharLimit:   1024,
+		PanelTitle: global.Config.Panels.Main_req_headers.Title,
+		PanelID:     global.PANEL_REQ_HEADERS,
+		Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
+		Showline:    true,
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		StatusOptions: []string{},
+	}
+	var bodyComponent = components.TextPane{
+		CharLimit:   2048,
+		PanelTitle: global.Config.Panels.Main_req_body.Title,
+		PanelID:     global.PANEL_REQ_BODY,
+		Placeholder: "request body content",
+		Showline:    true,
+		Border:      types.BorderConfig{Bottom: true, Top: true, Left: true, Right: true},
+		StatusOptions: []string{},
+	}
+	return methodTypeComponent, urlPathComponent, headersComponent, bodyComponent
+}
+
+//take current snapshot of inputs: method,url,headers,body & compose a HttpType object
+func (rq *RequestPane) ExportPayload() types.HttpType {
+	method := rq.method.Input.Value()
+	path := rq.url.Input.Value()
+	body := rq.body.Input.Value()
+
+	rawHeaders := rq.headers.Input.Value()
+	headers := utils.HeaderKVparser(rawHeaders)
+
+	return types.HttpType{
+		Method:  method,
+		Path:    path,
+		Headers: headers,
+		Body:    body,
+	}
+}
+
+// handler for when sidepanel tree triggers load/unload 
+func (rq *RequestPane) StateHandler(){	
+	
+}
+ --------------------------------- 

@@ -29,9 +29,18 @@ type TextOptions struct {
 	StatusOptions []string
 
 	selectIndex   int
+
+	Dimensions    types.PaneGeometry
+	PaneCfg       types.HttyPanel
+
 }
 
 func (text *TextOptions) Init() tea.Cmd {
+	text.CharLimit = 2052635
+	text.Border = types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true}
+	text.Showline = false
+	text.StatusOptions = []string{}
+
 	var input textarea.Model = textarea.New()
 	input.Placeholder = text.Placeholder
 	input.ShowLineNumbers = text.Showline
@@ -166,11 +175,9 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	return baseView, optionsLayer
 }
 
-func (text *TextOptions) SetSize(width, height int) {
-	text.Width = width
-	text.Height = height
-	text.Input.SetWidth(width)
-	text.Input.SetHeight(height)
+func (text *TextOptions) SetSize() {
+	text.Input.SetWidth(text.Dimensions.Width)
+	text.Input.SetHeight(text.Dimensions.Height)
 }
 
 //change the Options[] with new suggestions

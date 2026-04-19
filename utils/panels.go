@@ -40,6 +40,15 @@ func SetStatusLineOptions(options []string){
 }
 
 
+//resolve geoemtry for a pane (set width, height of a pane in config wrt what its parent dimensions is) (to be called in SetSize the parent)
+func GetPaneGeometry(paneCfg types.HttyPanel, parentGeometry types.PaneGeometry) types.PaneGeometry {
+	return types.PaneGeometry{
+		Width: GetPercent(paneCfg.Width, parentGeometry.Width),
+		Height: GetPercent(paneCfg.Height, parentGeometry.Height),
+	}
+}
+
+
 //for a panel, what are the action keys , like alt+s, alt+c allowed as per its "Keys"
 func GetPanelActionKeys(panelCfg types.HttyPanel) []string{
 	var keys []string;

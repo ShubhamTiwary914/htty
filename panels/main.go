@@ -15,16 +15,18 @@ type tickMsg struct{}
 
 
 type MainPane struct {
-	width        int
-	height       int
 	requestPane  RequestPane
 	responsePane ResponsePane
 	compositor   *lipgloss.Compositor
 	dots string 
+	
+	Dimensions types.PaneGeometry 
+	PaneConfig types.HttyPanel 
 }
 
 func (main *MainPane) Init() tea.Cmd {
-	utils.Infof("main panel initialization")
+	utils.Infof("main panel initialization")	
+	main.PaneConfig = global.Config.Panels.Main
 	main.requestPane.Init()
 	main.responsePane.Init()
 	return nil
@@ -69,24 +71,17 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 func (main *MainPane) View() string {
 	reqLayer := utils.CreateNewLayer(&main.requestPane, global.Config.Panels.Main_req)
 	resLayer := utils.CreateNewLayer(&main.responsePane, global.Config.Panels.Main_res,
-		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
+		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.Dimensions.Height),
 	)
 	main.compositor = lipgloss.NewCompositor(reqLayer, resLayer)
 	mainStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
 	return mainStyle.Render(main.compositor.Render())
 }
 
-func (main *MainPane) SetSize(width int, height int) {
-	main.width = width
-	main.height = height
-	main.requestPane.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_req.Width, main.width),
-		utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
-	)
-	main.responsePane.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_res.Width, main.width),
-		utils.GetPercent(global.Config.Panels.Main_res.Height, main.height),
-	)
+
+func (main *MainPane) SetSize() {
+	main.requestPane.Dimensions = utils.GetPaneGeometry(main.requestPane.PaneConfig, main.Dimensions)
+	main.responsePane.Dimensions = utils.GetPaneGeometry(main.responsePane.PaneConfig, main.Dimensions)
+	main.requestPane.SetSize()
+	main.responsePane.SetSize()
 }
-
-

@@ -11,12 +11,15 @@ import (
 )
 
 type SidePane struct {
-	width    int
-	height   int
 	fileTree components.FileTree
+	
+	Dimensions types.PaneGeometry 
+	PaneConfig types.HttyPanel 
+
 }
 
 func (side *SidePane) Init() tea.Cmd {
+	side.PaneConfig = global.Config.Panels.Side
 	side.fileTree = components.FileTree{
 		PanelID:    global.PANEL_SIDE_ID,
 		PanelTitle: "File tree sidebar",
@@ -50,10 +53,8 @@ func (side SidePane) View() string {
 	)
 }
 
-func (side *SidePane) SetSize(width int, height int) {
-	side.width = width
-	side.height = height
-	side.fileTree.SetSize(width, height)
+func (side *SidePane) SetSize() {
+	side.fileTree.SetSize(side.Dimensions.Width, side.Dimensions.Height)
 }
 
 func FileTreeHandler(path string) {

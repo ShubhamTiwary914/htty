@@ -21,9 +21,17 @@ type TextPane struct {
 	Border        types.BorderConfig
 	Margin        types.MarginConfig
 	StatusOptions []string
+
+	Dimensions    types.PaneGeometry
+	PaneCfg       types.HttyPanel
 }
 
 func (text *TextPane) Init() tea.Cmd {
+	text.CharLimit = 2052635
+	text.Border = types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true}
+	text.Showline = true 
+	text.StatusOptions = []string{}
+
 	var input textarea.Model = textarea.New()
 	input.Placeholder = text.Placeholder
 	input.ShowLineNumbers = text.Showline
@@ -61,9 +69,7 @@ func (text TextPane) View() string {
 	)
 }
 
-func (text *TextPane) SetSize(width, height int) {
-	text.Width = width
-	text.Height = height
-	text.Input.SetWidth(width)
-	text.Input.SetHeight(height)
+func (text *TextPane) SetSize() {
+	text.Input.SetWidth(text.Dimensions.Width)
+	text.Input.SetHeight(text.Dimensions.Height)
 }
