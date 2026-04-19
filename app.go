@@ -71,8 +71,8 @@ func (app App) View() string {
 func (app *App) SetSize() {
 	app.Dimensions = types.PaneGeometry{Width: global.AppWidth, Height: global.AppHeight}
 	grid := utils.ResolveGrid(app.Dimensions, [][]types.GridCell{
-		{{Config: global.Config.Panels.Side}, {Config: global.Config.Panels.Main}},
-		{{Config: global.Config.Panels.Statusline}},
+		{{Config: app.sidePane.PaneConfig}, {Config: app.mainPane.PaneConfig}},
+		{{Config: app.statusLinePane.PaneConfig}},
 	})
 	app.sidePane.Dimensions       = grid[0][0]
 	app.mainPane.Dimensions       = grid[0][1]

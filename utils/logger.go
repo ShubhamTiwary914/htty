@@ -115,3 +115,7 @@ func HttpObjectLogOut(httpObj types.HttpType) {
 		Debugf("%s", httpObj.Body)
 	}
 }
+
+func LogPanelGeometry(label string, dims types.PaneGeometry){
+	Debugf("%s {X: %s, Y: %s, Width: %s, Height: %s}", label, dims.X, dims.Y, dims.Width, dims.Height)
+}

@@ -45,9 +45,7 @@ func (side SidePane) View() string {
 	focusColor := utils.GetPanelFocusColor(global.PANEL_SIDE_ID)
 	style := utils.SetBorder(border).
 		BorderForeground(lipgloss.Color(focusColor)).
-		Background(lipgloss.Color(global.Config.Common.Background_color)).
-		Margin(0, 0, 1, 0)
-
+		Background(lipgloss.Color(global.Config.Common.Background_color))
 	return utils.SetBorderStyle_WithLabelTop(style, side.fileTree.View(), border,
 		utils.GetPanelTitleLabel("File tree sidebar", global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]),
 	)

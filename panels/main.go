@@ -68,11 +68,11 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
 }
 
+
 func (main *MainPane) View() string {
-	reqLayer := utils.CreateNewLayer(&main.requestPane, global.Config.Panels.Main_req)
-	resLayer := utils.CreateNewLayer(&main.responsePane, global.Config.Panels.Main_res,
-		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.Dimensions.Height),
-	)
+	reqLayer := utils.CreateLayerFromDims(&main.requestPane, main.requestPane.Dimensions, 1)
+	resLayer := utils.CreateLayerFromDims(&main.responsePane, main.responsePane.Dimensions, 1)
+
 	main.compositor = lipgloss.NewCompositor(reqLayer, resLayer)
 	mainStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
 	return mainStyle.Render(main.compositor.Render())
@@ -80,8 +80,13 @@ func (main *MainPane) View() string {
 
 
 func (main *MainPane) SetSize() {
-	main.requestPane.Dimensions = utils.GetPaneGeometry(main.requestPane.PaneConfig, main.Dimensions)
-	main.responsePane.Dimensions = utils.GetPaneGeometry(main.responsePane.PaneConfig, main.Dimensions)
+	grid := utils.ResolveGrid(main.Dimensions, [][]types.GridCell{
+		{{Config: main.requestPane.PaneConfig}},
+		{{Config: main.responsePane.PaneConfig}},
+	})
+	main.requestPane.Dimensions = grid[0][0]
+	main.responsePane.Dimensions = grid[1][0]
+
 	main.requestPane.SetSize()
 	main.responsePane.SetSize()
 }

@@ -16,7 +16,6 @@ type FileTree struct {
 	PanelID       string
 	PanelTitle    string
 	Border        types.BorderConfig
-	Margin        types.MarginConfig
 	StatusOptions []string
 	err           error
 }

@@ -63,16 +63,19 @@ func GetPaneGeometry(paneCfg types.HttyPanel, parentGeometry types.PaneGeometry)
 */
 func ResolveGrid(parent types.PaneGeometry, rows [][]types.GridCell) [][]types.PaneGeometry {
 	result := make([][]types.PaneGeometry, len(rows))
-	cumY := parent.Y
+	cumY := 0
 	for r, row := range rows {
 		result[r] = make([]types.PaneGeometry, len(row))
-		cumX := parent.X
+		cumX := 0
 		rowHeight := 0
 		for c, cell := range row {
 			w := (cell.Config.Width * parent.Width) / 100
 			h := (cell.Config.Height * parent.Height) / 100
+			mx := cell.Config.Margin[0]
+			my := cell.Config.Margin[1]
+
 			result[r][c] = types.PaneGeometry{
-				X: cumX, Y: cumY,
+				X: cumX + mx, Y: cumY + my,
 				Width: w, Height: h,
 			}
 			cumX += w
@@ -85,9 +88,16 @@ func ResolveGrid(parent types.PaneGeometry, rows [][]types.GridCell) [][]types.P
 	return result
 }
 
+
 //uses PaneGeometry of a panel to generate a lipgloss compositor layer
 func CreateLayerFromDims(pane types.BasePanel, dims types.PaneGeometry, z int) *lipgloss.Layer {
 	return lipgloss.NewLayer(pane.View()).X(dims.X).Y(dims.Y).Z(z)
+}
+
+//reset X=0 and Y=0 for a panel's Dimensions (type: PaneGeometry)
+func ResetGeometryPos(panelDism *types.PaneGeometry) () {
+	panelDism.X = 0
+	panelDism.Y = 0
 }
 
 
@@ -233,7 +243,6 @@ func SetBorderStyle_WithLabel(style lipgloss.Style, content string, cfg types.Bo
     borderFgColor := style.GetBorderTopForeground()
     contentWithBorders := SetBorder(cfgModified).
         BorderForeground(borderFgColor).
-        Margin(style.GetMarginTop(), style.GetMarginRight(), style.GetMarginBottom(), style.GetMarginLeft()).
         Background(style.GetBackground()).
         Render(content)
     
@@ -290,54 +299,4 @@ func SetFullBorder(width, height int, color string) lipgloss.Style {
 	})
 }
 
-func SetBorderOneSide(width, height int, color string, direction string) lipgloss.Style {
-	cfg := types.BorderConfig{
-		Width:  width,
-		Height: height,
-		Color:  color,
-		Top:    false,
-		Bottom: false,
-		Left:   false,
-		Right:  false,
-	}
-	switch direction {
-	case global.BORDER_UP:
-		cfg.Top = true
-	case global.BORDER_DOWN:
-		cfg.Bottom = true
-	case global.BORDER_LEFT:
-		cfg.Left = true
-	case global.BORDER_RIGHT:
-		cfg.Right = true
-	}
-	
-	return SetBorder(cfg)
-}
 
-/*
-	Creates a new layer of lipgloss compositor 
-	(ref - https://github.com/charmbracelet/lipgloss?tab=readme-ov-file#compositing)
-
-	(pane types.BasePanel) - what panel, since that's View() is also invoked
-
-	(paneCfg) - which panel config, since that configs like margin, size is taken
-
-	(offsets) - x, y offsets for margin if needed
-
-	Returns a new lipgloss layer to be Rendered
-*/
-func CreateNewLayer(pane types.BasePanel, paneCfg types.HttyPanel, offsets ...int) *lipgloss.Layer {
-	var xoff int = 0
-	var yoff int = 0
-	if(len(offsets) >= 2){
-		yoff += offsets[1]
-	}
-	if(len(offsets) >= 1){
-		xoff += offsets[0]
-	}
-	var newlayer *lipgloss.Layer = lipgloss.NewLayer(pane.View()).
-					X(paneCfg.Margin[0] + xoff).
-					Y(paneCfg.Margin[1] + yoff).
-					Z(paneCfg.Layer)
-	return newlayer 
-}

@@ -21,7 +21,6 @@ type TextOptions struct {
 	Placeholder   string
 	Showline      bool
 	Border        types.BorderConfig
-	Margin        types.MarginConfig
 	OptionBuffer   []string 
 	OptionsStore   []string   
 	OptionsFilePath string
@@ -128,7 +127,6 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	// Render the base text input
 	inputStyle := utils.SetBorder(text.Border).BorderForeground(
 		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
-	).Margin(text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
 	).Background(lipgloss.Color(global.Config.Common.Background_color))
 	
 	text.Border.Color = utils.GetPanelFocusColor(text.PanelID)
@@ -152,8 +150,7 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 		Border(lipgloss.NormalBorder(), true, true, true, true).
 		BorderForeground(lipgloss.Color(global.Config.Common.Focus_border_color)).
 		Background(lipgloss.Color(global.Config.Common.Background_color)).
-		Width(text.Width).
-		Padding(0, 1)
+		Width(text.Width)
 
 	// style for selected item
 	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(global.Config.Common.Textoptions_selection_color))

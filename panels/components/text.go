@@ -62,8 +62,7 @@ func (text TextPane) View() string {
 	text.Border.Color = utils.GetPanelFocusColor(text.PanelID) 
 	style := utils.SetBorder(text.Border).
 				BorderForeground(lipgloss.Color(text.Border.Color)).
-				Background(lipgloss.Color(global.Config.Common.Background_color)).
-				Margin(0,0,1,0)
+				Background(lipgloss.Color(global.Config.Common.Background_color))
 	return utils.SetBorderStyle_WithLabelTop(style, text.Input.View(), text.Border, 
 		utils.GetPanelTitleLabel(text.PanelTitle, global.PANEL_FOCUS_IDS[text.PanelID]),		
 	)
