@@ -4,6 +4,7 @@ package utils
 import (
 	"bufio"
 	"crypto/rand"
+	"encoding/json"
 	"encoding/hex"
 	"os"
 	"os/exec"
@@ -30,6 +31,17 @@ func WriteFileContents(filePath string, contents string) error {
 	}
 	return nil
 }
+
+//takes any struct object, packs as json and saves to file
+func WriteObjectIntoFile[Type any](path string, objVal Type) error {
+	data, err := json.Marshal(objVal)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
+}
+
 
 func GenerateRandomUUID(size int) string{
 	//1 byte = 2 hex characters
@@ -63,5 +75,6 @@ func SaveFileDialog(defaultName string) (string, error) {
 	}
 	return result, nil
 }
+
 
 

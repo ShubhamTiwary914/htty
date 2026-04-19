@@ -46,5 +46,4 @@ func (bus *EventBus) Publish(event string, data any){
 var StateBus = &EventBus{ Listeners: make(map[string][]chan any) }
 const (
 	EVENT_STATE_LOAD string = "state.load"
-	EVENT_STATE_SAVE string = "state.save"
 )

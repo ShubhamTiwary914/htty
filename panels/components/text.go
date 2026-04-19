@@ -74,6 +74,5 @@ func (text *TextPane) SetSize() {
 }
 
 
-func (text *TextPane) SetValue(value string){
-	text.Input.SetValue(value)
-}
+func (text *TextPane) SetValue(value string){ text.Input.SetValue(value) }
+func (text *TextPane) GetValue() (string) { return text.Input.Value() }

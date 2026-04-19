@@ -192,3 +192,4 @@ func (text *TextOptions) ClearOptions(){
 func (text *TextOptions) SetValue(value string){
 	text.Input.SetValue(value)
 }
+func (text *TextOptions) GetValue() (string) { return text.Input.Value() }

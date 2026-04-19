@@ -90,6 +90,7 @@
 		"quit": "q",
 		"nextpanel": "tab",
 		"sendapicall": "alt+enter",
+		"savestate": "alt+S",
 		"jumpleader": "alt",
 		"completeText": "enter",
 		"textoptions_prev": "up",

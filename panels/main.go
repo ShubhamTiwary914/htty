@@ -22,6 +22,7 @@ type MainPane struct {
 	Dimensions types.PaneGeometry 
 	PaneConfig types.HttyPanel 
 	stateLoadChan chan any 
+	currStateBuf types.HttyState
 }
 
 func (main *MainPane) Init() tea.Cmd {
@@ -48,14 +49,19 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 					if err != nil {
 						utils.Errorf("error loading response, error: %v", err)
 					}
-					return types.HttpRespState{
+					main.currStateBuf.Response = types.HttpRespState{
 						Output: utils.ResponseParser_main(resp, headers, status, false), 
 						Raw: string(resp), Headers: headers, Status: status,
 					}
+					return main.currStateBuf.Response
 				},
 			)
 		}
-
+		utils.Debugf("message: %s", msg.String())
+		if msg.String() == global.Config.Key.Savestate {
+			main.__saveStateDialog()			
+			return nil;
+		}
 	case tickMsg:
 		if main.responsePane.loading {
 			main.dots += "."
@@ -66,12 +72,9 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 	case types.HttpRespState:
 		main.responsePane.SetResponse(msg.Output, msg.Raw, msg.Headers, msg.Status)
 		main.responsePane.loading = false
-
 	case types.HttyState:
 		main.__stateLoadPerform(msg)
 	}
-
-
 	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
 }
 
@@ -114,4 +117,19 @@ func (main *MainPane) __stateLoadPerform(state types.HttyState){
 	main.responsePane.SetResponse(
 		state.Response.Output, state.Response.Raw, state.Response.Headers, state.Response.Status,
 	)
+}
+func (main *MainPane) __saveStateDialog(){
+	utils.Debugf("saving now!")
+	main.currStateBuf = types.HttyState{
+		Method: main.requestPane.method.GetValue(),
+		URL: main.requestPane.url.GetValue(),
+		ReqBody: main.requestPane.body.GetValue(),
+		ReqHeaders: utils.HeaderKVparser(main.requestPane.headers.GetValue()),
+		Response: main.currStateBuf.Response,
+	}	
+	savePath , err := utils.SaveFileDialog("response.hstate") 
+	err = utils.WriteObjectIntoFile(savePath, main.currStateBuf)
+	if err != nil {
+		panic(err)
+	}
 }
