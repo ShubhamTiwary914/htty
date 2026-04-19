@@ -1,21 +1,18 @@
-package panels 
+package panels
 
 import (
 	global "htty/globals"
-	utils "htty/utils"
+	"htty/types"
 
+	utils "htty/utils"
 	"time"
-	tea "github.com/charmbracelet/bubbletea"
+
 	lipgloss "charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type tickMsg struct{}
-type httpDoneMsg struct {
-    output  string
-    raw     string
-    headers map[string]string
-    status  int
-}
+
 
 type MainPane struct {
 	width        int
@@ -46,7 +43,10 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 					if err != nil {
 						utils.Errorf("error loading response, error: %v", err)
 					}
-					return httpDoneMsg{output: utils.ResponseParser_main(resp, headers, status, false), raw: string(resp), headers: headers, status: status}
+					return types.HttpRespState{
+						Output: utils.ResponseParser_main(resp, headers, status, false), 
+						Raw: string(resp), Headers: headers, Status: status,
+					}
 				},
 			)
 		}
@@ -58,8 +58,8 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 			return tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg{} })
 		}
 		return nil;
-	case httpDoneMsg:
-		main.responsePane.SetResponse(msg.output, msg.raw, msg.headers, msg.status)
+	case types.HttpRespState:
+		main.responsePane.SetResponse(msg.Output, msg.Raw, msg.Headers, msg.Status)
 		main.responsePane.loading = false
 	}
 
@@ -88,3 +88,5 @@ func (main *MainPane) SetSize(width int, height int) {
 		utils.GetPercent(global.Config.Panels.Main_res.Height, main.height),
 	)
 }
+
+

@@ -28,6 +28,7 @@ func (rq *RequestPane) Init() tea.Cmd {
 	rq.url.Init()
 	rq.headers.Init()
 	rq.body.Init()
+	rq.StateHandler()
 	return nil
 }
 
@@ -149,4 +150,9 @@ func (rq *RequestPane) ExportPayload() types.HttpType {
 		Headers: headers,
 		Body:    body,
 	}
+}
+
+// handler for when sidepanel tree triggers load/unload 
+func (rq *RequestPane) StateHandler(){	
+	
 }

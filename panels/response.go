@@ -115,3 +115,7 @@ func (res *ResponsePane) verboseToggle(){
 								res.status, res.verboseAllow) 
 	res.SetResponse(newOutput, string(res.bodyRaw), res.headersRaw, res.status)
 }
+
+
+//TODO: when sidepanel tree triggers load/unload
+func (res *ResponsePane) StateLoader(){}

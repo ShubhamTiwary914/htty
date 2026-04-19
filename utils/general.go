@@ -1,13 +1,15 @@
-//pure utility methods like calculations, rounding, array/object operations, etc..
-package utils 
+// pure utility methods like calculations, rounding, array/object operations, etc..
+package utils
 
 import (
-	"os"
-	"os/exec"
-	"runtime"
 	"bufio"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
+	types "htty/types"
+	"os"
+	"os/exec"
+	"runtime"
 )
 
 func GetPercent(percentage int, source int) int{
@@ -30,7 +32,6 @@ func WriteFileContents(filePath string, contents string) error {
 	}
 	return nil
 }
-
 
 func GenerateRandomUUID(size int) string{
 	//1 byte = 2 hex characters
@@ -63,4 +64,21 @@ func SaveFileDialog(defaultName string) (string, error) {
 		result = result[:len(result)-1]
 	}
 	return result, nil
+}
+
+
+//loads from ".htty" file (json type) to get a httystate object
+func LoadState(filepath string) (types.HttyState) {
+	var statebuf types.HttyState
+	
+	return statebuf
+}
+
+//take current httystate from req/res & save into file
+func SaveState(curstate types.HttyState, filepath string) error {
+	stateJson, err :=  json.Marshal(curstate);
+	if err != nil { return err }
+	err = WriteFileContents(filepath, string(stateJson))
+	if err != nil { return err }
+	return nil
 }

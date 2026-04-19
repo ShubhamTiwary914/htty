@@ -19,11 +19,11 @@ type App struct {
 func (app *App) Init() tea.Cmd {
 	utils.Infof("app panel initialization called")
 	app.mainPane.Init()
-	app.sidePane.Init()
+	filetree := app.sidePane.Init()
 	app.statusLinePane.Init()
 	app.SetSize()
 	app.View()
-	return nil
+	return filetree 
 }
 
 func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

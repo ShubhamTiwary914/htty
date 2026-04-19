@@ -4,8 +4,8 @@ import (
 	types "htty/types"
 
 	global "htty/globals"
-	utils "htty/utils"
 
+	utils "htty/utils"
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"

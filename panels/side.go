@@ -1,36 +1,61 @@
-package panels 
+package panels
 
 import (
 	global "htty/globals"
+	"htty/panels/components"
+	"htty/types"
 	utils "htty/utils"
+
+	lipgloss "charm.land/lipgloss/v2"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type SidePane struct {
-	width  int
-	height int
+	width    int
+	height   int
+	fileTree components.FileTree
 }
 
-func (side SidePane) Init() tea.Cmd {
-	return nil
+func (side *SidePane) Init() tea.Cmd {
+	side.fileTree = components.FileTree{
+		PanelID:    global.PANEL_SIDE_ID,
+		PanelTitle: "File tree sidebar",
+		Border:     types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true},
+	}
+	return side.fileTree.Init()
 }
 
 func (side *SidePane) Update(msg tea.Msg) tea.Cmd {
-	focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]
-	if focused {
-		utils.SetStatusLineOptions([]string{})
-	}
-	return nil
+    focused := global.CurrentPanelID == global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]
+    if focused {
+        utils.SetStatusLineOptions([]string{})
+    }
+    cmd := side.fileTree.Update(msg)
+    if didSelect, path := side.fileTree.Picker.DidSelectFile(msg); didSelect {
+        FileTreeHandler(path)
+    }
+    return cmd
 }
 
 func (side SidePane) View() string {
-	style := utils.SetFullBorder(side.width-2, side.height-2,
-		utils.GetPanelFocusColor(global.PANEL_SIDE_ID),
+	border := types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true}
+	focusColor := utils.GetPanelFocusColor(global.PANEL_SIDE_ID)
+	style := utils.SetBorder(border).
+		BorderForeground(lipgloss.Color(focusColor)).
+		Background(lipgloss.Color(global.Config.Common.Background_color)).
+		Margin(0, 0, 1, 0)
+
+	return utils.SetBorderStyle_WithLabelTop(style, side.fileTree.View(), border,
+		utils.GetPanelTitleLabel("File tree sidebar", global.PANEL_FOCUS_IDS[global.PANEL_SIDE_ID]),
 	)
-	return style.Render("")
 }
 
 func (side *SidePane) SetSize(width int, height int) {
 	side.width = width
 	side.height = height
+	side.fileTree.SetSize(width, height)
+}
+
+func FileTreeHandler(path string) {
+	utils.Debugf("FileTreeHandler called - selected path: %s", path)
 }

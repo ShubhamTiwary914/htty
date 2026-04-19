@@ -42,6 +42,8 @@ var HTTP_METHOD = map[string]int{
 	"TRACE": 9,
 }
 
+var AppState types.HttyState
+
 const (
 	PANEL_SIDE_ID string = "side"
 	PANEL_REQ_ID string = "main_req"
@@ -71,3 +73,5 @@ const (
 	BORDER_LEFT  = "BORDER_LEFT"
 	BORDER_RIGHT = "BORDER_RIGHT"
 )
+
+const STATE_FILETYPE = "htstate"

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
 	"golang.org/x/net/html"
 )
 
