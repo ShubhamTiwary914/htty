@@ -4,8 +4,8 @@ import (
 	"os"
 	global "htty/globals"
 	types "htty/types"
-	utils "htty/utils"
 
+	utils "htty/utils"
 	"github.com/charmbracelet/bubbles/filepicker"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -31,7 +31,7 @@ func (ft *FileTree) Init() tea.Cmd {
 	picker.ShowSize = false
 	picker.FileAllowed = true
 	picker.DirAllowed = false 
-	picker.AllowedTypes = append(picker.AllowedTypes, global.STATE_FILETYPE);
+	picker.AllowedTypes = global.STATE_ALLOWED_FILETYPES
 
 	ft.Picker = picker
 	return ft.Picker.Init()

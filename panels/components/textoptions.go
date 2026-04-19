@@ -187,3 +187,8 @@ func (text *TextOptions) ClearOptions(){
 	text.selectIndex = 0
 	text.OptionBuffer = nil
 }
+
+
+func (text *TextOptions) SetValue(value string){
+	text.Input.SetValue(value)
+}

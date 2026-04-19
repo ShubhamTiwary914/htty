@@ -5,8 +5,6 @@ import (
 	"bufio"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
-	types "htty/types"
 	"os"
 	"os/exec"
 	"runtime"
@@ -67,18 +65,3 @@ func SaveFileDialog(defaultName string) (string, error) {
 }
 
 
-//loads from ".htty" file (json type) to get a httystate object
-func LoadState(filepath string) (types.HttyState) {
-	var statebuf types.HttyState
-	
-	return statebuf
-}
-
-//take current httystate from req/res & save into file
-func SaveState(curstate types.HttyState, filepath string) error {
-	stateJson, err :=  json.Marshal(curstate);
-	if err != nil { return err }
-	err = WriteFileContents(filepath, string(stateJson))
-	if err != nil { return err }
-	return nil
-}

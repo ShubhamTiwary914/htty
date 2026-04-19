@@ -25,7 +25,7 @@ func (bus *EventBus) Subscribe(event string, channel chan any) {
 
 //when publish to this event, all subscribers of this event get the data
 func (bus *EventBus) Publish(event string, data any){
-	bus.Locker.Lock()
+	bus.Locker.RLock()
 	listeners := bus.Listeners[event]
 	bus.Locker.RUnlock()
 
@@ -46,5 +46,5 @@ func (bus *EventBus) Publish(event string, data any){
 var StateBus = &EventBus{ Listeners: make(map[string][]chan any) }
 const (
 	EVENT_STATE_LOAD string = "state.load"
-	EVENT_STATE_UNLOAD string = "state.unload"
+	EVENT_STATE_SAVE string = "state.save"
 )

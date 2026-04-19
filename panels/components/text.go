@@ -72,3 +72,8 @@ func (text *TextPane) SetSize() {
 	text.Input.SetWidth(text.Dimensions.Width)
 	text.Input.SetHeight(text.Dimensions.Height)
 }
+
+
+func (text *TextPane) SetValue(value string){
+	text.Input.SetValue(value)
+}

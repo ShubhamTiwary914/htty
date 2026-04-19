@@ -56,5 +56,5 @@ func (side *SidePane) SetSize() {
 }
 
 func FileTreeHandler(path string) {
-	utils.Debugf("FileTreeHandler called - selected path: %s", path)
+	global.StateBus.Publish(global.EVENT_STATE_LOAD, utils.LoadState(path))
 }

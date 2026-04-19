@@ -13,7 +13,6 @@ import (
 
 type tickMsg struct{}
 
-
 type MainPane struct {
 	requestPane  RequestPane
 	responsePane ResponsePane
@@ -22,6 +21,7 @@ type MainPane struct {
 	
 	Dimensions types.PaneGeometry 
 	PaneConfig types.HttyPanel 
+	stateLoadChan chan any 
 }
 
 func (main *MainPane) Init() tea.Cmd {
@@ -29,7 +29,10 @@ func (main *MainPane) Init() tea.Cmd {
 	main.PaneConfig = global.Config.Panels.Main
 	main.requestPane.Init()
 	main.responsePane.Init()
-	return nil
+
+	main.stateLoadChan = make(chan any, 1)
+	global.StateBus.Subscribe(global.EVENT_STATE_LOAD, main.stateLoadChan)
+	return main.__waitForStateLoad()
 }
 
 func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
@@ -63,7 +66,11 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 	case types.HttpRespState:
 		main.responsePane.SetResponse(msg.Output, msg.Raw, msg.Headers, msg.Status)
 		main.responsePane.loading = false
+
+	case types.HttyState:
+		main.__stateLoadPerform(msg)
 	}
+
 
 	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
 }
@@ -89,4 +96,22 @@ func (main *MainPane) SetSize() {
 
 	main.requestPane.SetSize()
 	main.responsePane.SetSize()
+}
+
+
+//event loop listener for: when a new file is to be loaded -> load onto -> url, type, headers, ... 
+// when a message sent to stateLoadChan, Update() will be called and this msg is forwarded there
+func (main *MainPane) __waitForStateLoad() tea.Cmd {
+	return func() tea.Msg {
+		return <-main.stateLoadChan 	}
+}
+func (main *MainPane) __stateLoadPerform(state types.HttyState){
+	utils.Debugf("State changing requested!")
+	main.requestPane.method.SetValue(state.Method)
+	main.requestPane.url.SetValue(state.URL)
+	main.requestPane.headers.SetValue(utils.HeaderKVEncoder(state.ReqHeaders))
+	main.requestPane.body.SetValue(state.ReqBody)
+	main.responsePane.SetResponse(
+		state.Response.Output, state.Response.Raw, state.Response.Headers, state.Response.Status,
+	)
 }

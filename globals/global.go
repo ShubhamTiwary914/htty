@@ -74,4 +74,4 @@ const (
 	BORDER_RIGHT = "BORDER_RIGHT"
 )
 
-const STATE_FILETYPE = "htstate"
+var STATE_ALLOWED_FILETYPES = []string{ "hstate" }
