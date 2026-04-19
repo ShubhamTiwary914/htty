@@ -39,3 +39,7 @@ type PaneGeometry struct {
 	Width int
 	Height int
 }
+
+type GridCell struct {
+	Config HttyPanel
+}

@@ -49,6 +49,48 @@ func GetPaneGeometry(paneCfg types.HttyPanel, parentGeometry types.PaneGeometry)
 }
 
 
+/* resolveGrid takes a parent geometry and a 2D row/col declaration,
+	returns resolved X/Y/W/H for each cell. Position in the slice IS the row/col.
+	
+	example:
+	grid := utils.ResolveGrid(app.Dimensions, [][]utils.GridCell{
+		// row 0: side | main  (statusline docked separately below)
+		{{Config: global.Config.Panels.Side}, {Config: global.Config.Panels.Main}},
+
+		// row 1: statusline spans full width
+		{{Config: global.Config.Panels.Statusline}},
+	})
+*/
+func ResolveGrid(parent types.PaneGeometry, rows [][]types.GridCell) [][]types.PaneGeometry {
+	result := make([][]types.PaneGeometry, len(rows))
+	cumY := parent.Y
+	for r, row := range rows {
+		result[r] = make([]types.PaneGeometry, len(row))
+		cumX := parent.X
+		rowHeight := 0
+		for c, cell := range row {
+			w := (cell.Config.Width * parent.Width) / 100
+			h := (cell.Config.Height * parent.Height) / 100
+			result[r][c] = types.PaneGeometry{
+				X: cumX, Y: cumY,
+				Width: w, Height: h,
+			}
+			cumX += w
+			if h > rowHeight {
+				rowHeight = h
+			}
+		}
+		cumY += rowHeight
+	}
+	return result
+}
+
+//uses PaneGeometry of a panel to generate a lipgloss compositor layer
+func CreateLayerFromDims(pane types.BasePanel, dims types.PaneGeometry, z int) *lipgloss.Layer {
+	return lipgloss.NewLayer(pane.View()).X(dims.X).Y(dims.Y).Z(z)
+}
+
+
 //for a panel, what are the action keys , like alt+s, alt+c allowed as per its "Keys"
 func GetPanelActionKeys(panelCfg types.HttyPanel) []string{
 	var keys []string;

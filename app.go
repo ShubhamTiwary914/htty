@@ -58,14 +58,10 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 
 func (app App) View() string {
-	//set the side and main layers 
-	sideLayer := utils.CreateNewLayer(&app.sidePane, global.Config.Panels.Side)
-	mainLayer := utils.CreateNewLayer(&app.mainPane, global.Config.Panels.Main, 
-		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
-	)	
-	statusLineLayer := utils.CreateNewLayer(&app.statusLinePane, global.Config.Panels.Statusline,
-		0, utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight),
-	)
+	sideLayer := utils.CreateLayerFromDims(&app.sidePane, app.sidePane.Dimensions, 1)
+	mainLayer := utils.CreateLayerFromDims(&app.mainPane, app.mainPane.Dimensions, 1)
+	statusLineLayer := utils.CreateLayerFromDims(&app.statusLinePane, app.statusLinePane.Dimensions, 1)
+
 	app.compositor = lipgloss.NewCompositor(sideLayer, mainLayer, statusLineLayer)
 	appStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
 	return appStyle.Render(app.compositor.Render())
@@ -74,8 +70,14 @@ func (app App) View() string {
 
 func (app *App) SetSize() {
 	app.Dimensions = types.PaneGeometry{Width: global.AppWidth, Height: global.AppHeight}
-	app.sidePane.Dimensions = utils.GetPaneGeometry(app.sidePane.PaneConfig, app.Dimensions);
-	app.mainPane.Dimensions = utils.GetPaneGeometry(app.mainPane.PaneConfig, app.Dimensions);
+	grid := utils.ResolveGrid(app.Dimensions, [][]types.GridCell{
+		{{Config: global.Config.Panels.Side}, {Config: global.Config.Panels.Main}},
+		{{Config: global.Config.Panels.Statusline}},
+	})
+	app.sidePane.Dimensions       = grid[0][0]
+	app.mainPane.Dimensions       = grid[0][1]
+	app.statusLinePane.Dimensions = grid[1][0]
+
 	app.mainPane.SetSize()
 	app.sidePane.SetSize()
 }

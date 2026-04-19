@@ -1,7 +1,8 @@
-package panels 
+package panels
 
 import (
 	global "htty/globals"
+	"htty/types"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -10,6 +11,7 @@ import (
 
 type StatusLinePane struct {
 	options []string
+	Dimensions types.PaneGeometry
 }
 
 
