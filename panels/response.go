@@ -1,4 +1,4 @@
-package htty
+package panels 
 
 import (
 	"fmt"
@@ -24,9 +24,13 @@ type ResponsePane struct {
 
 	loading bool
 	verboseAllow bool
+
+	Dimensions types.PaneGeometry 
+	PaneConfig types.HttyPanel 
 }
 
 func (res *ResponsePane) Init() tea.Cmd {
+	res.PaneConfig = global.Config.Panels.Main_res
 	utils.Infof("response panel initialization")
 	res.textpane = NewResponseTextComponent()
 	res.textpane.Init()
@@ -62,9 +66,11 @@ func (res ResponsePane) View() string {
 	return res.textpane.View()
 }
 
-func (res *ResponsePane) SetSize(width int, height int) {
-	res.textpane.SetSize(width-2, height)
+func (res *ResponsePane) SetSize() {
+	res.textpane.SetSize(res.Dimensions.Width, res.Dimensions.Height)
 }
+
+
 
 func (res *ResponsePane) SetResponse(formattedResp string, rawBody string, headers map[string]string, status int) {
 	res.bodyRaw = rawBody
@@ -115,3 +121,7 @@ func (res *ResponsePane) verboseToggle(){
 								res.status, res.verboseAllow) 
 	res.SetResponse(newOutput, string(res.bodyRaw), res.headersRaw, res.status)
 }
+
+
+//TODO: when sidepanel tree triggers load/unload
+func (res *ResponsePane) StateLoader(){}

@@ -1,4 +1,4 @@
-package htty
+package components 
 
 import (
 	global "htty/globals"
@@ -21,7 +21,6 @@ type TextOptions struct {
 	Placeholder   string
 	Showline      bool
 	Border        types.BorderConfig
-	Margin        types.MarginConfig
 	OptionBuffer   []string 
 	OptionsStore   []string   
 	OptionsFilePath string
@@ -29,9 +28,18 @@ type TextOptions struct {
 	StatusOptions []string
 
 	selectIndex   int
+
+	Dimensions    types.PaneGeometry
+	PaneCfg       types.HttyPanel
+
 }
 
 func (text *TextOptions) Init() tea.Cmd {
+	text.CharLimit = 2052635
+	text.Border = types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true}
+	text.Showline = false
+	text.StatusOptions = []string{}
+
 	var input textarea.Model = textarea.New()
 	input.Placeholder = text.Placeholder
 	input.ShowLineNumbers = text.Showline
@@ -119,7 +127,6 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	// Render the base text input
 	inputStyle := utils.SetBorder(text.Border).BorderForeground(
 		lipgloss.Color(utils.GetPanelFocusColor(text.PanelID)),
-	).Margin(text.Margin.Top, text.Margin.Right, text.Margin.Bottom, text.Margin.Left,
 	).Background(lipgloss.Color(global.Config.Common.Background_color))
 	
 	text.Border.Color = utils.GetPanelFocusColor(text.PanelID)
@@ -143,8 +150,7 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 		Border(lipgloss.NormalBorder(), true, true, true, true).
 		BorderForeground(lipgloss.Color(global.Config.Common.Focus_border_color)).
 		Background(lipgloss.Color(global.Config.Common.Background_color)).
-		Width(text.Width).
-		Padding(0, 1)
+		Width(text.Width)
 
 	// style for selected item
 	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(global.Config.Common.Textoptions_selection_color))
@@ -166,11 +172,9 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 	return baseView, optionsLayer
 }
 
-func (text *TextOptions) SetSize(width, height int) {
-	text.Width = width
-	text.Height = height
-	text.Input.SetWidth(width)
-	text.Input.SetHeight(height)
+func (text *TextOptions) SetSize() {
+	text.Input.SetWidth(text.Dimensions.Width)
+	text.Input.SetHeight(text.Dimensions.Height)
 }
 
 //change the Options[] with new suggestions
@@ -183,3 +187,9 @@ func (text *TextOptions) ClearOptions(){
 	text.selectIndex = 0
 	text.OptionBuffer = nil
 }
+
+
+func (text *TextOptions) SetValue(value string){
+	text.Input.SetValue(value)
+}
+func (text *TextOptions) GetValue() (string) { return text.Input.Value() }

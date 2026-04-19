@@ -1,4 +1,4 @@
-package htty
+package components 
 
 import (
 	global "htty/globals"
@@ -21,9 +21,17 @@ type TextPane struct {
 	Border        types.BorderConfig
 	Margin        types.MarginConfig
 	StatusOptions []string
+
+	Dimensions    types.PaneGeometry
+	PaneCfg       types.HttyPanel
 }
 
 func (text *TextPane) Init() tea.Cmd {
+	text.CharLimit = 2052635
+	text.Border = types.BorderConfig{Top: true, Bottom: true, Left: true, Right: true}
+	text.Showline = true 
+	text.StatusOptions = []string{}
+
 	var input textarea.Model = textarea.New()
 	input.Placeholder = text.Placeholder
 	input.ShowLineNumbers = text.Showline
@@ -54,16 +62,17 @@ func (text TextPane) View() string {
 	text.Border.Color = utils.GetPanelFocusColor(text.PanelID) 
 	style := utils.SetBorder(text.Border).
 				BorderForeground(lipgloss.Color(text.Border.Color)).
-				Background(lipgloss.Color(global.Config.Common.Background_color)).
-				Margin(0,0,1,0)
+				Background(lipgloss.Color(global.Config.Common.Background_color))
 	return utils.SetBorderStyle_WithLabelTop(style, text.Input.View(), text.Border, 
 		utils.GetPanelTitleLabel(text.PanelTitle, global.PANEL_FOCUS_IDS[text.PanelID]),		
 	)
 }
 
-func (text *TextPane) SetSize(width, height int) {
-	text.Width = width
-	text.Height = height
-	text.Input.SetWidth(width)
-	text.Input.SetHeight(height)
+func (text *TextPane) SetSize() {
+	text.Input.SetWidth(text.Dimensions.Width)
+	text.Input.SetHeight(text.Dimensions.Height)
 }
+
+
+func (text *TextPane) SetValue(value string){ text.Input.SetValue(value) }
+func (text *TextPane) GetValue() (string) { return text.Input.Value() }

@@ -1,13 +1,14 @@
-//pure utility methods like calculations, rounding, array/object operations, etc..
-package htty
+// pure utility methods like calculations, rounding, array/object operations, etc..
+package utils
 
 import (
+	"bufio"
+	"crypto/rand"
+	"encoding/json"
+	"encoding/hex"
 	"os"
 	"os/exec"
 	"runtime"
-	"bufio"
-	"crypto/rand"
-	"encoding/hex"
 )
 
 func GetPercent(percentage int, source int) int{
@@ -29,6 +30,16 @@ func WriteFileContents(filePath string, contents string) error {
 		return err;
 	}
 	return nil
+}
+
+//takes any struct object, packs as json and saves to file
+func WriteObjectIntoFile[Type any](path string, objVal Type) error {
+	data, err := json.Marshal(objVal)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
 }
 
 
@@ -64,3 +75,6 @@ func SaveFileDialog(defaultName string) (string, error) {
 	}
 	return result, nil
 }
+
+
+

@@ -1,11 +1,11 @@
-package htty
+package components 
 
 import (
 	types "htty/types"
 
 	global "htty/globals"
-	utils "htty/utils"
 
+	utils "htty/utils"
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,8 +55,7 @@ func (pager *PagerPane) View() string {
 	pager.Border.Color = utils.GetPanelFocusColor(pager.PanelID)
 	style := utils.SetBorder(pager.Border).
 		BorderForeground(lipgloss.Color(pager.Border.Color)).
-		Background(lipgloss.Color(global.Config.Common.Background_color)).
-		Margin(0, 0, 1, 0)
+		Background(lipgloss.Color(global.Config.Common.Background_color))
 	return utils.SetBorderStyle_WithLabelTop(style, pager.Viewport.View(), pager.Border,
 		utils.GetPanelTitleLabel(pager.PanelTitle, global.PANEL_FOCUS_IDS[pager.PanelID]),
 	)

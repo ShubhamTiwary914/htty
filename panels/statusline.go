@@ -1,7 +1,8 @@
-package htty
+package panels
 
 import (
 	global "htty/globals"
+	"htty/types"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -10,10 +11,13 @@ import (
 
 type StatusLinePane struct {
 	options []string
+	Dimensions types.PaneGeometry
+	PaneConfig types.HttyPanel
 }
 
 
 func (status *StatusLinePane) Init() tea.Cmd {
+	status.PaneConfig = global.Config.Panels.Statusline
 	return nil
 }
 

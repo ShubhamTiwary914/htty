@@ -1,7 +1,7 @@
 /*
 dealing with config management stuff for loading config
 */
-package htty
+package utils 
 
 import (
 	"encoding/json"

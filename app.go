@@ -3,6 +3,7 @@ package main
 import (
 	global "htty/globals"
 	panels "htty/panels"
+	"htty/types"
 	utils "htty/utils"
 
 	"charm.land/lipgloss/v2"
@@ -14,20 +15,21 @@ type App struct {
 	mainPane   			panels.MainPane
 	statusLinePane 		panels.StatusLinePane
 	compositor 			*lipgloss.Compositor
+
+	Dimensions          types.PaneGeometry
 }
 
 func (app *App) Init() tea.Cmd {
 	utils.Infof("app panel initialization called")
-	app.mainPane.Init()
-	app.sidePane.Init()
-	app.statusLinePane.Init()
-	app.SetSize()
-	app.View()
-	return nil
+	mainTea := app.mainPane.Init()
+	sideTea := app.sidePane.Init()
+	statusTea := app.statusLinePane.Init()
+	return tea.Batch(mainTea, sideTea, statusTea)
 }
 
 func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	
 	//auto resize to window dimensions
 	case tea.WindowSizeMsg:
 		global.AppWidth = msg.Width
@@ -50,32 +52,32 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	//INFO: allows passing tea object for handling events to children panes
+	//allows passing tea object for handling events to children panes
 	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane)
 }
 
 
 func (app App) View() string {
-	//set the side and main layers 
-	sideLayer := utils.CreateNewLayer(&app.sidePane, global.Config.Panels.Side)
-	mainLayer := utils.CreateNewLayer(&app.mainPane, global.Config.Panels.Main, 
-		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
-	)	
-	statusLineLayer := utils.CreateNewLayer(&app.statusLinePane, global.Config.Panels.Statusline,
-		0, utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight),
-	)
+	sideLayer := utils.CreateLayerFromDims(&app.sidePane, app.sidePane.Dimensions, 1)
+	mainLayer := utils.CreateLayerFromDims(&app.mainPane, app.mainPane.Dimensions, 1)
+	statusLineLayer := utils.CreateLayerFromDims(&app.statusLinePane, app.statusLinePane.Dimensions, 1)
+
 	app.compositor = lipgloss.NewCompositor(sideLayer, mainLayer, statusLineLayer)
 	appStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
 	return appStyle.Render(app.compositor.Render())
 }
 
+
 func (app *App) SetSize() {
-	app.sidePane.SetSize(
-		utils.GetPercent(global.Config.Panels.Side.Width, global.AppWidth),
-		utils.GetPercent(global.Config.Panels.Side.Height, global.AppHeight),
-	)
-	app.mainPane.SetSize(
-		utils.GetPercent(global.Config.Panels.Main.Width, global.AppWidth),
-		utils.GetPercent(global.Config.Panels.Main.Height, global.AppHeight),
-	)
+	app.Dimensions = types.PaneGeometry{Width: global.AppWidth, Height: global.AppHeight}
+	grid := utils.ResolveGrid(app.Dimensions, [][]types.GridCell{
+		{{Config: app.sidePane.PaneConfig}, {Config: app.mainPane.PaneConfig}},
+		{{Config: app.statusLinePane.PaneConfig}},
+	})
+	app.sidePane.Dimensions       = grid[0][0]
+	app.mainPane.Dimensions       = grid[0][1]
+	app.statusLinePane.Dimensions = grid[1][0]
+
+	app.mainPane.SetSize()
+	app.sidePane.SetSize()
 }

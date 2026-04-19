@@ -3,7 +3,7 @@
 	NOTE: this is to be used as least as possible, for any constant, save under types/ (makes test/mocks much easier to replicate)
 */
 
-package htty
+package globals 
 
 import (
 	types "htty/types"
@@ -42,6 +42,8 @@ var HTTP_METHOD = map[string]int{
 	"TRACE": 9,
 }
 
+var AppState types.HttyState
+
 const (
 	PANEL_SIDE_ID string = "side"
 	PANEL_REQ_ID string = "main_req"
@@ -71,3 +73,5 @@ const (
 	BORDER_LEFT  = "BORDER_LEFT"
 	BORDER_RIGHT = "BORDER_RIGHT"
 )
+
+var STATE_ALLOWED_FILETYPES = []string{ "hstate" }

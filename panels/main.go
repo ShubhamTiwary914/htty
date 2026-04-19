@@ -1,36 +1,39 @@
-package htty
+package panels
 
 import (
 	global "htty/globals"
-	utils "htty/utils"
+	"htty/types"
 
+	utils "htty/utils"
 	"time"
-	tea "github.com/charmbracelet/bubbletea"
+
 	lipgloss "charm.land/lipgloss/v2"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type tickMsg struct{}
-type httpDoneMsg struct {
-    output  string
-    raw     string
-    headers map[string]string
-    status  int
-}
 
 type MainPane struct {
-	width        int
-	height       int
 	requestPane  RequestPane
 	responsePane ResponsePane
 	compositor   *lipgloss.Compositor
 	dots string 
+	
+	Dimensions types.PaneGeometry 
+	PaneConfig types.HttyPanel 
+	stateLoadChan chan any 
+	currStateBuf types.HttyState
 }
 
 func (main *MainPane) Init() tea.Cmd {
-	utils.Infof("main panel initialization")
+	utils.Infof("main panel initialization")	
+	main.PaneConfig = global.Config.Panels.Main
 	main.requestPane.Init()
 	main.responsePane.Init()
-	return nil
+
+	main.stateLoadChan = make(chan any, 1)
+	global.StateBus.Subscribe(global.EVENT_STATE_LOAD, main.stateLoadChan)
+	return main.__waitForStateLoad()
 }
 
 func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
@@ -46,11 +49,19 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 					if err != nil {
 						utils.Errorf("error loading response, error: %v", err)
 					}
-					return httpDoneMsg{output: utils.ResponseParser_main(resp, headers, status, false), raw: string(resp), headers: headers, status: status}
+					main.currStateBuf.Response = types.HttpRespState{
+						Output: utils.ResponseParser_main(resp, headers, status, false), 
+						Raw: string(resp), Headers: headers, Status: status,
+					}
+					return main.currStateBuf.Response
 				},
 			)
 		}
-
+		utils.Debugf("message: %s", msg.String())
+		if msg.String() == global.Config.Key.Savestate {
+			main.__saveStateDialog()			
+			return nil;
+		}
 	case tickMsg:
 		if main.responsePane.loading {
 			main.dots += "."
@@ -58,33 +69,67 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 			return tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg{} })
 		}
 		return nil;
-	case httpDoneMsg:
-		main.responsePane.SetResponse(msg.output, msg.raw, msg.headers, msg.status)
+	case types.HttpRespState:
+		main.responsePane.SetResponse(msg.Output, msg.Raw, msg.Headers, msg.Status)
 		main.responsePane.loading = false
+	case types.HttyState:
+		main.__stateLoadPerform(msg)
 	}
-
 	return utils.UpdatePanels(msg, &main.requestPane, &main.responsePane)
 }
 
+
 func (main *MainPane) View() string {
-	reqLayer := utils.CreateNewLayer(&main.requestPane, global.Config.Panels.Main_req)
-	resLayer := utils.CreateNewLayer(&main.responsePane, global.Config.Panels.Main_res,
-		0, utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
-	)
+	reqLayer := utils.CreateLayerFromDims(&main.requestPane, main.requestPane.Dimensions, 1)
+	resLayer := utils.CreateLayerFromDims(&main.responsePane, main.responsePane.Dimensions, 1)
+
 	main.compositor = lipgloss.NewCompositor(reqLayer, resLayer)
 	mainStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
 	return mainStyle.Render(main.compositor.Render())
 }
 
-func (main *MainPane) SetSize(width int, height int) {
-	main.width = width
-	main.height = height
-	main.requestPane.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_req.Width, main.width),
-		utils.GetPercent(global.Config.Panels.Main_req.Height, main.height),
+
+func (main *MainPane) SetSize() {
+	grid := utils.ResolveGrid(main.Dimensions, [][]types.GridCell{
+		{{Config: main.requestPane.PaneConfig}},
+		{{Config: main.responsePane.PaneConfig}},
+	})
+	main.requestPane.Dimensions = grid[0][0]
+	main.responsePane.Dimensions = grid[1][0]
+
+	main.requestPane.SetSize()
+	main.responsePane.SetSize()
+}
+
+
+//event loop listener for: when a new file is to be loaded -> load onto -> url, type, headers, ... 
+// when a message sent to stateLoadChan, Update() will be called and this msg is forwarded there
+func (main *MainPane) __waitForStateLoad() tea.Cmd {
+	return func() tea.Msg {
+		return <-main.stateLoadChan 	}
+}
+func (main *MainPane) __stateLoadPerform(state types.HttyState){
+	utils.Debugf("State changing requested!")
+	main.requestPane.method.SetValue(state.Method)
+	main.requestPane.url.SetValue(state.URL)
+	main.requestPane.headers.SetValue(utils.HeaderKVEncoder(state.ReqHeaders))
+	main.requestPane.body.SetValue(state.ReqBody)
+	main.responsePane.SetResponse(
+		state.Response.Output, state.Response.Raw, state.Response.Headers, state.Response.Status,
 	)
-	main.responsePane.SetSize(
-		utils.GetPercent(global.Config.Panels.Main_res.Width, main.width),
-		utils.GetPercent(global.Config.Panels.Main_res.Height, main.height),
-	)
+}
+func (main *MainPane) __saveStateDialog(){
+	utils.Debugf("saving now!")
+	main.currStateBuf = types.HttyState{
+		Method: main.requestPane.method.GetValue(),
+		URL: main.requestPane.url.GetValue(),
+		ReqBody: main.requestPane.body.GetValue(),
+		ReqHeaders: utils.HeaderKVparser(main.requestPane.headers.GetValue()),
+		Response: main.currStateBuf.Response,
+	}	
+	savePath , err := utils.SaveFileDialog("response.hstate") 
+	err = utils.WriteObjectIntoFile(savePath, main.currStateBuf)
+	if err != nil {
+		panic(err)
+	}
 }

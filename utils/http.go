@@ -1,4 +1,4 @@
-package htty
+package utils 
 	
 import (
 	"net/http"
@@ -60,7 +60,7 @@ func HTTPCaller(httpObj types.HttpType) ([]byte, map[string]string, int, error) 
 */
 func HeaderKVparser(rawHeaders string) map[string]string{
 	headers := make(map[string]string)
-	for _, line := range strings.Split(rawHeaders, "\n") {
+	for line := range strings.SplitSeq(rawHeaders, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -75,6 +75,21 @@ func HeaderKVparser(rawHeaders string) map[string]string{
 	}
 	return headers;
 }
+
+//Take header k:v map and get a string split by delimiter newline(\n)
+func HeaderKVEncoder(headers map[string]string) string {
+	var buf strings.Builder
+
+	for k, v := range headers {
+		buf.WriteString(k)
+		buf.WriteString(": ")
+		buf.WriteString(v)
+		buf.WriteByte('\n')
+	}
+
+	return buf.String()
+}
+
 
 //check if http method is of standard type(GET/POST/PUT/etc..)
 func AssertHTTPMethodType(method string) bool{

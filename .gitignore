@@ -6,3 +6,4 @@
 
 htty
 tests/rough_test.go
+**.hstate

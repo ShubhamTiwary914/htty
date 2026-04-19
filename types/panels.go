@@ -1,4 +1,4 @@
-package htty
+package types 
 
 import (
 	"github.com/charmbracelet/bubbletea"
@@ -29,4 +29,17 @@ type MarginConfig struct {
 	Bottom int 
 	Left   int  
 	Right  int 
+}
+
+
+//dimensions for a panel
+type PaneGeometry struct {
+	X int
+	Y int 
+	Width int
+	Height int
+}
+
+type GridCell struct {
+	Config HttyPanel
 }

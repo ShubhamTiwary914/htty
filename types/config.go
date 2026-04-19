@@ -1,4 +1,4 @@
-package htty
+package types 
 
 
 type HttyConfig struct {
@@ -48,6 +48,7 @@ type HttyKeyConfig struct {
 	Quit        	string
 	Nextpanel   	string
 	Sendapicall 	string
+	Savestate	    string
 	Jumpleader      string
 	CompleteText 	string
 	Textoptions_prev string
