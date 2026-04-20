@@ -75,7 +75,7 @@ func (alert AlertPane) View() string {
 		Background(lipgloss.Color(global.Config.Common.Background_color)).
 		Width(alert.Dimensions.Width).
 		Padding(0, 1).
-		Render(alert.Message)
+		Render("press <" + alert.EndKey + "> to close window\n\n" +  alert.Message)
 	return box
 }
 

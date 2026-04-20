@@ -69,6 +69,8 @@ func (res *ResponsePane) SetSize() {
 	res.textpane.SetSize(res.Dimensions.Width, res.Dimensions.Height)
 }
 
+
+
 func (res *ResponsePane) SetResponse(formattedResp string, rawBody string, headers map[string]string, status int) {
 	res.bodyRaw = rawBody
 	res.headersRaw = headers
