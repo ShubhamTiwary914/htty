@@ -68,12 +68,19 @@ roughtest:
 docslive:
 	go doc -http
 
+
 .PHONY: stats
 .ONESHELL:
-stats: build 
-	exec_size=$$(du -sh ./htty | awk '{print $$1}') 
+stats: build
+	@exec_size=$$(du -sh ./htty | awk '{print $$1}')
 	@echo ""
-	@echo "binary(htty) size: $$exec_size"
+	@echo "$$(go version)"
+	@echo "Binary(htty) size: $$exec_size"
+	@echo "Lines of Code: $$(find . -type f -name '*.go' -exec cat {} + | awk 'END{print NR}')"
+	@echo "Current Branch: $$(git branch --show-current)"
+	@echo "Last Updated by $$(git log -1 --pretty=format:'%an at %ad' --date=default)"
+	@rm -f ./htty
+
 
 .PHONY: help
 help:
