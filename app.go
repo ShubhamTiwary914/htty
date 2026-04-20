@@ -3,6 +3,7 @@ package main
 import (
 	global "htty/globals"
 	panels "htty/panels"
+	components "htty/panels/components"
 	"htty/types"
 	utils "htty/utils"
 
@@ -14,17 +15,20 @@ type App struct {
 	sidePane   			panels.SidePane
 	mainPane   			panels.MainPane
 	statusLinePane 		panels.StatusLinePane
+	alertPane     		components.AlertPane
 	compositor 			*lipgloss.Compositor
 
+	alertBoxChan chan any 
 	Dimensions          types.PaneGeometry
 }
 
 func (app *App) Init() tea.Cmd {
 	utils.Infof("app panel initialization called")
+	events := app.__eventsInit()
 	mainTea := app.mainPane.Init()
 	sideTea := app.sidePane.Init()
 	statusTea := app.statusLinePane.Init()
-	return tea.Batch(mainTea, sideTea, statusTea)
+	return tea.Batch(events, mainTea, sideTea, statusTea)
 }
 
 func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -51,9 +55,11 @@ func (app App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return &app, nil
 			}
 		}
+	case components.AlertPane:
+		return app.__alertboxHandler(msg)
 	}
 	//allows passing tea object for handling events to children panes
-	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane)
+	return &app, utils.UpdatePanels(msg, &app.sidePane, &app.mainPane, &app.alertPane)
 }
 
 
@@ -61,8 +67,13 @@ func (app App) View() string {
 	sideLayer := utils.CreateLayerFromDims(&app.sidePane, app.sidePane.Dimensions, 1)
 	mainLayer := utils.CreateLayerFromDims(&app.mainPane, app.mainPane.Dimensions, 1)
 	statusLineLayer := utils.CreateLayerFromDims(&app.statusLinePane, app.statusLinePane.Dimensions, 1)
+	
+	layers := []*lipgloss.Layer{sideLayer, mainLayer, statusLineLayer}
+	if alertLayer := app.alertPane.ViewAsLayer(); alertLayer != nil {
+		layers = append(layers, alertLayer)
+	}
 
-	app.compositor = lipgloss.NewCompositor(sideLayer, mainLayer, statusLineLayer)
+	app.compositor = lipgloss.NewCompositor(layers...)
 	appStyle := lipgloss.NewStyle().Background(lipgloss.Color(global.Config.Common.Background_color))
 	return appStyle.Render(app.compositor.Render())
 }
@@ -80,4 +91,34 @@ func (app *App) SetSize() {
 
 	app.mainPane.SetSize()
 	app.sidePane.SetSize()
+}
+
+
+//INFO: EVENTS HANDLER section (app is top level panel and can handle IO, so lots may be appear here)
+
+//make channels and register as subscribers
+func (app *App) __eventsInit() (tea.Cmd){
+	app.alertBoxChan = make(chan any, 1)
+	global.StateBus.Subscribe(global.EVENT_ALERTPANE, app.alertBoxChan)
+	utils.Infof("app subscribed to event %s", global.EVENT_ALERTPANE)
+
+	alertBoxWait := func() tea.Msg {
+		return <- app.alertBoxChan 		
+	}
+	return tea.Batch(alertBoxWait)
+}
+
+func (app *App) __alertboxHandler(alertPaneCfg components.AlertPane) (tea.Model, tea.Cmd) {
+	utils.Debugf("app has received the event %s!", global.EVENT_ALERTPANE)
+
+	app.alertPane.Dimensions = alertPaneCfg.Dimensions
+	app.alertPane.TTL        = alertPaneCfg.TTL
+	app.alertPane.EndKey     = alertPaneCfg.EndKey
+	showCmd := app.alertPane.Show(alertPaneCfg.Message, alertPaneCfg.Level)
+
+	// re-arm: keep listening for the next alert event
+	rearmCmd := func() tea.Msg {
+		return <-app.alertBoxChan
+	}
+	return app, tea.Batch(showCmd, rearmCmd)
 }

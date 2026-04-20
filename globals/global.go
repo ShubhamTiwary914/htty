@@ -11,7 +11,6 @@ import (
 	"os"
 )
 
-
 //environment vars
 var CachePrefix string
 var LOGLEVEL  = "info"
@@ -42,7 +41,7 @@ var HTTP_METHOD = map[string]int{
 	"TRACE": 9,
 }
 
-var AppState types.HttyState
+var STATE_ALLOWED_FILETYPES = []string{ "hstate" }
 
 const (
 	PANEL_SIDE_ID string = "side"
@@ -73,5 +72,3 @@ const (
 	BORDER_LEFT  = "BORDER_LEFT"
 	BORDER_RIGHT = "BORDER_RIGHT"
 )
-
-var STATE_ALLOWED_FILETYPES = []string{ "hstate" }

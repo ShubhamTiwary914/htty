@@ -4,8 +4,8 @@ package utils
 import (
 	"bufio"
 	"crypto/rand"
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"runtime"
@@ -75,6 +75,4 @@ func SaveFileDialog(defaultName string) (string, error) {
 	}
 	return result, nil
 }
-
-
 
