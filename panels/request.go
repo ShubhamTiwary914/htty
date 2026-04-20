@@ -15,7 +15,7 @@ type RequestPane struct {
 	initialized   bool
 	method        components.TextOptions
 	url           components.TextOptions
-	headers       components.TextPane
+	headers       components.HeaderPane
 	body          components.TextPane
 	compositor    *lipgloss.Compositor
 
@@ -75,11 +75,13 @@ func (rq *RequestPane) __initSubPanels() {
 		AllowSaveInput: true,
 		PaneCfg: global.Config.Panels.Main_req_url,
 	}
-	rq.headers = components.TextPane{
+	rq.headers = components.HeaderPane{
 		PanelTitle: rq.headers.PaneCfg.Title,
 		PanelID:     global.PANEL_REQ_HEADERS,
 		Placeholder: "Header-Key:   Header-Value\nHeader-Key-2: Header-Value-2\n...",
+		OptionsFilePath: global.CachePrefix + "/headers.txt",
 		PaneCfg: global.Config.Panels.Main_req_headers,
+		SuggestionsLimit: 10,
 	}
 	rq.body = components.TextPane{
 		PanelTitle: rq.body.PaneCfg.Title,
@@ -104,6 +106,8 @@ func (rq *RequestPane) __buildCompositor() {
 
 	_, methodOptionsLayer := rq.method.ViewWithOptions(true)
 	_, urlOptionsLayer := rq.url.ViewWithOptions(true); 
+	_, headersOptionsLayer := rq.headers.ViewWithOptions(true)
+
 	// add options overlay if focused
 	if methodOptionsLayer != nil {
 		methodOptionsLayer.X(rq.method.Dimensions.X).Y(rq.method.Dimensions.Y + rq.method.Dimensions.Height+1).Z(2)
@@ -113,6 +117,10 @@ func (rq *RequestPane) __buildCompositor() {
 		urlOptionsLayer.X(rq.url.Dimensions.X).Y(rq.url.Dimensions.Y + rq.url.Dimensions.Height+1).Z(2)
 		layers = append(layers, urlOptionsLayer)
 	}	
+	if headersOptionsLayer != nil {
+		// X/Y already set inside ViewWithOptions
+		layers = append(layers, headersOptionsLayer)  	
+	}
 	rq.compositor = lipgloss.NewCompositor(layers...)
 }
 
@@ -124,7 +132,7 @@ func (rq *RequestPane) ExportPayload() types.HttpType {
 	path := rq.url.Input.Value()
 	body := rq.body.Input.Value()
 
-	rawHeaders := rq.headers.Input.Value()
+	rawHeaders := rq.headers.GetValue()
 	headers := utils.HeaderKVparser(rawHeaders)
 
 	return types.HttpType{
