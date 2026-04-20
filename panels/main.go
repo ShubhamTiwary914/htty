@@ -106,7 +106,8 @@ func (main *MainPane) SetSize() {
 // when a message sent to stateLoadChan, Update() will be called and this msg is forwarded there
 func (main *MainPane) __waitForStateLoad() tea.Cmd {
 	return func() tea.Msg {
-		return <-main.stateLoadChan 	}
+		return <-main.stateLoadChan 	
+	}
 }
 func (main *MainPane) __stateLoadPerform(state types.HttyState){
 	utils.Debugf("State changing requested!")

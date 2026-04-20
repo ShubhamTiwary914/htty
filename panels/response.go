@@ -1,4 +1,4 @@
-package panels 
+package panels
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	types "htty/types"
 	utils "htty/utils"
 	"slices"
-
 	global "htty/globals"
 	"os"
 
@@ -30,7 +29,7 @@ type ResponsePane struct {
 }
 
 func (res *ResponsePane) Init() tea.Cmd {
-	res.PaneConfig = global.Config.Panels.Main_res
+	res.PaneConfig = global.Config.Panels.Main_res	
 	utils.Infof("response panel initialization")
 	res.textpane = NewResponseTextComponent()
 	res.textpane.Init()
@@ -69,8 +68,6 @@ func (res ResponsePane) View() string {
 func (res *ResponsePane) SetSize() {
 	res.textpane.SetSize(res.Dimensions.Width, res.Dimensions.Height)
 }
-
-
 
 func (res *ResponsePane) SetResponse(formattedResp string, rawBody string, headers map[string]string, status int) {
 	res.bodyRaw = rawBody
