@@ -15,6 +15,7 @@ import (
 var CachePrefix string
 var LOGLEVEL  = "info"
 var TEMP_DIR string
+var CONFIG_PATH string
 
 
 //enum for "focused" panel where cmd actions can act on currently
