@@ -15,6 +15,14 @@ func GetPercent(percentage int, source int) int{
 	return (percentage * source)/100
 }
 
+func GetEnv(envName string, default_ string) string {
+	var env string = os.Getenv(envName)
+	if env == "" {
+		env = default_
+	}
+	return env
+}
+
 //write raw string contents into a file at filepath
 func WriteFileContents(filePath string, contents string) error {
 	file, err := os.Create(filePath)

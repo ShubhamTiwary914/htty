@@ -1,19 +1,20 @@
 /*
 dealing with config management stuff for loading config
 */
-package utils 
+package utils
 
 import (
 	"encoding/json"
 	"errors"
+	global "htty/globals"
+	types "htty/types"
 	"os"
 	"path/filepath"
-	types "htty/types"
 )
 
 func GetConfigFile() ([]byte, error) {
+	configpath := global.CONFIG_PATH
 	//if path is set -> make sure its absolute
-	configpath := os.Getenv("CONFIG_FILE")
 	if configpath != "" {
 		if !filepath.IsAbs(configpath) {
 			return nil, errors.New("CONFIG_FILE must be an absolute path")
