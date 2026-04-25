@@ -13,7 +13,6 @@ import (
 )
 
 type TextOptions struct {
-	Width, Height int
 	Input         textarea.Model
 	CharLimit     int
 	PanelTitle    string
@@ -150,7 +149,7 @@ func (text TextOptions) ViewWithOptions(withLayer bool) (baseView string, option
 		Border(lipgloss.NormalBorder(), true, true, true, true).
 		BorderForeground(lipgloss.Color(global.Config.Common.Focus_border_color)).
 		Background(lipgloss.Color(global.Config.Common.Background_color)).
-		Width(text.Width)
+		Width(text.Dimensions.Width)
 
 	// style for selected item
 	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(global.Config.Common.Textoptions_selection_color))
