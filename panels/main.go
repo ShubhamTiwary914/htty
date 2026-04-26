@@ -1,6 +1,7 @@
 package panels
 
 import (
+	"fmt"
 	global "htty/globals"
 	"htty/types"
 
@@ -48,6 +49,7 @@ func (main *MainPane) Update(msg tea.Msg) tea.Cmd {
 					resp, headers, status, err := utils.HTTPCaller(main.requestPane.ExportPayload())
 					if err != nil {
 						utils.Errorf("error loading response, error: %v", err)
+						resp = []byte(fmt.Sprintf("%v", err))
 					}
 					main.currStateBuf.Response = types.HttpRespState{
 						Output: utils.ResponseParser_main(resp, headers, status, false), 

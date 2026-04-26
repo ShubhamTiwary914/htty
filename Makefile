@@ -1,7 +1,7 @@
 #INFO: default logfile path, is configurable
 LOGFILE=.logs/htty.log
 CONFIG_FILE="$(PWD)/config.json"
-CACHE_PREFIX="$(PWD)/.cache"
+CACHE_PREFIX="$(PWD)/setup/default_cmps"
 TMP_DIR="/tmp"
 
 # build & run --------------
@@ -13,13 +13,15 @@ runbuild:
 
 .PHONY: dev
 dev: 
-	LOGLEVEL=all CONFIG_FILE=$(CONFIG_FILE) \
+	LOGLEVEL=all \
+		LOGFILE=$(LOGFILE) \
+		CONFIG_FILE=$(CONFIG_FILE) \
 		TMP_DIR=$(TMP_DIR) \
 		CACHE_PREFIX=$(CACHE_PREFIX) go run .
 
-.PHONY: debug 
 debug:
 	LOGLEVEL=debug \
+		LOGFILE=$(LOGFILE) \
 		CONFIG_FILE=$(CONFIG_FILE) \
 		TMP_DIR=$(TMP_DIR) \
 		CACHE_PREFIX=$(CACHE_PREFIX) go run .

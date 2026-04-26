@@ -78,7 +78,6 @@ else
 fi
 
 
-
 # log file ---
 step "Setting up log file"
 sudo mkdir -p $LOG_DIR
