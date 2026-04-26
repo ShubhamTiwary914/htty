@@ -13,7 +13,8 @@ import (
 
 //environment vars
 var CachePrefix string
-var LOGLEVEL  = "info"
+var LOGLEVEL string 
+var LOGFILE string
 var TEMP_DIR string
 var CONFIG_PATH string
 

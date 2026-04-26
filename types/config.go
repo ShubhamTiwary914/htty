@@ -4,7 +4,6 @@ package types
 type HttyConfig struct {
 	Common HttyCommonConfig
 	Panels HttyPanelsConfig
-	Log    HttyLogConfig
 	Key    HttyKeyConfig
 }
 
@@ -38,11 +37,6 @@ type HttyPanelsConfig struct {
 	Statusline     HttyPanel
 }
 
-type HttyLogConfig struct {
-	Allow bool
-	File  string
-	Level string
-}
 
 type HttyKeyConfig struct {
 	Quit        	string

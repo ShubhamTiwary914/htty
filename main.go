@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	global "htty/globals"
 	utils "htty/utils"
 	"os"
@@ -22,7 +23,14 @@ func main(){
 func __init() {
 	//load config
 	var err error
-	global.CONFIG_PATH = utils.GetEnv("CONFIG_FILE", "/home/sardiness/.config/htty/config.json")
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		utils.Errorf("%v", err)
+		panic(err)
+	}
+	global.CONFIG_PATH = utils.GetEnv("CONFIG_FILE", fmt.Sprintf(
+		"/home/%s/.config/htty/config.json", homeDir,
+	))
 	global.Config , err = utils.GetConfig() 
 	if err != nil {
 		utils.Errorf("%v", err)
@@ -31,11 +39,14 @@ func __init() {
 
 	//overwrite = true: flushes logfile each run
 	global.LOGLEVEL = utils.GetEnv("LOGLEVEL", "info")
-	utils.RedirectLogs_toFile(global.Config.Log.File, true)
+	global.LOGFILE = utils.GetEnv("LOGFILE", "/var/log/htty/htty.log")
+	utils.RedirectLogs_toFile(global.LOGFILE, true)
 	utils.Infof("htty application initializing")
 
 	//envs set
-	global.CachePrefix = utils.GetEnv("CACHE_PREFIX", "/home/sardiness/.cache/htty")
+	global.CachePrefix = utils.GetEnv("CACHE_PREFIX", fmt.Sprintf(
+		"/home/%s/.cache/htty", homeDir,
+	))
 	global.PANEL_FOCUS_IDS, err = utils.GetPanelIDsMap(global.Config)
 	global.CurrentPanelID = global.PANEL_FOCUS_IDS[global.PANEL_REQ_METHOD_ID]
 	if err != nil {
