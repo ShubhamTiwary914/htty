@@ -81,11 +81,6 @@
 			"layer": 10
 		}
 	},
-	"log": {
-		"allow": true,
-		"file": ".logs/htty.log",
-		"level": "all"
-	},
 	"key": {
 		"quit": "q",
 		"nextpanel": "tab",
