@@ -1,0 +1,49 @@
+<svg viewBox="0 0 480 160" xmlns="http://www.w3.org/2000/svg" width="480" height="160">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- Terminal window chrome -->
+  <rect x="20" y="20" width="440" height="120" rx="10" ry="10" fill="#1a1b26" stroke="#2d2f45" stroke-width="1.5"/>
+
+  <!-- Traffic lights -->
+  <circle cx="44" cy="40" r="6" fill="#ff5f57"/>
+  <circle cx="62" cy="40" r="6" fill="#febc2e"/>
+  <circle cx="80" cy="40" r="6" fill="#28c840"/>
+
+  <!-- Title bar divider -->
+  <line x1="20" y1="54" x2="460" y2="54" stroke="#2d2f45" stroke-width="1"/>
+
+  <!-- Prompt symbol -->
+  <text x="44" y="100" font-family="'JetBrains Mono', monospace" font-size="22" font-weight="700" fill="#565f89">❯_</text>
+
+  <!-- htty wordmark: each letter colored like HTTP methods -->
+  <!-- h -->
+  <text x="88" y="100" font-family="'JetBrains Mono', monospace" font-size="38" font-weight="700" fill="#9ece6a">h</text>
+  <!-- t -->
+  <text x="116" y="100" font-family="'JetBrains Mono', monospace" font-size="38" font-weight="700" fill="#7aa2f7">t</text>
+  <!-- t -->
+  <text x="136" y="100" font-family="'JetBrains Mono', monospace" font-size="38" font-weight="700" fill="#7aa2f7">t</text>
+  <!-- y -->
+  <text x="156" y="100" font-family="'JetBrains Mono', monospace" font-size="38" font-weight="700" fill="#bb9af7">y</text>
+
+  <!-- Blinking cursor -->
+  <rect x="186" y="73" width="4" height="28" rx="1" fill="#c0caf5" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0;0.8" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Right side: subtle HTTP method pills -->
+  <rect x="260" y="72" width="44" height="18" rx="9" fill="#1a3d26"/>
+  <text x="282" y="85" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#9ece6a" text-anchor="middle">GET</text>
+
+  <rect x="312" y="72" width="48" height="18" rx="9" fill="#1a2a4a"/>
+  <text x="336" y="85" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#7aa2f7" text-anchor="middle">POST</text>
+
+  <rect x="368" y="72" width="52" height="18" rx="9" fill="#2a1a3a"/>
+  <text x="394" y="85" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#bb9af7" text-anchor="middle">DELETE</text>
+
+  <!-- Tagline -->
+  <text x="262" y="115" font-family="'JetBrains Mono', monospace" font-size="11" fill="#565f89">http client · terminal ui</text>
+</svg>
